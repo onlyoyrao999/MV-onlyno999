@@ -84,6 +84,7 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
               shotId: shotToDispatch.id,
               taskId: 'rh_init',
               workflowId: RUNNINGHUB_CONFIG.workflowId,
+              apiVersion: 'v2',
               status: 'RUNNING',
               progress: 0,
               stageName: '准备中',
@@ -136,7 +137,10 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 font-mono text-xs font-bold border border-cyan-500/40 flex items-center gap-1.5">
                 <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-                <span>RunningHub ComfyUI 云端工作流已绑定</span>
+                <span>RunningHub OpenAPI v2 云端工作流已绑定</span>
+              </span>
+              <span className="px-2.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-xs font-mono border border-indigo-500/30">
+                协议: API v2 (Bearer Auth)
               </span>
               <span className="px-2.5 py-0.5 rounded bg-slate-800 text-slate-300 text-xs font-mono border border-slate-700">
                 作者: {RUNNINGHUB_CONFIG.author}
@@ -151,8 +155,7 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
             </h1>
 
             <p className="text-sm text-slate-300 max-w-3xl leading-relaxed">
-              基于 Minimax H3 Turbo (4-Step) 与 Qwen3-VL 32B 音画联合采样架构，专门解决 AI 音乐 MV「嘴和歌对不上」的行业顽疾。
-              本工作流已封装为可直接调用的 OpenAPI，支持图片、音频切片、关 5 提示词与帧网格时长的毫秒级精确调度。
+              基于 Minimax H3 Turbo (4-Step) 与 Qwen3-VL 32B 音画联合采样架构，遵循 <strong>RunningHub OpenAPI v2 官方新版格式</strong>（<code className="text-cyan-300 text-xs">/openapi/v2/run/workflow</code> 与 <code className="text-cyan-300 text-xs">Bearer Token</code> 认证）。支持图片立绘、人声音频切片、关 5 提示词与帧网格时长的毫秒级精确调度。
             </p>
 
             <div className="flex flex-wrap items-center gap-4 pt-1 text-xs text-slate-400 font-mono">
@@ -240,8 +243,8 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
             </div>
             <p className="text-[11px] text-slate-400">
               {isSandbox
-                ? '💡 沙箱模式模拟 RunningHub Minimax H3 节点完整推理时序与 Gate 8 对齐三验，不扣真实算力点。'
-                : '⚡ 真实模式将通过已配置的 Vite 反向代理请求 https://www.runninghub.cn/task/openapi/create。'}
+                ? '💡 沙箱模式模拟 RunningHub OpenAPI v2 Minimax H3 节点完整推理时序与 Gate 8 对齐三验，不扣真实算力点。'
+                : '⚡ 真实模式将通过 Vite 代理调用 POST /openapi/v2/run/workflow/2100506281638457345 (Bearer Token 认证)。'}
             </p>
           </div>
 

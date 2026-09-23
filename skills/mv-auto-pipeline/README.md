@@ -31,5 +31,6 @@ skills/mv-auto-pipeline/
 * **项目直达**：[https://www.runninghub.cn/post/2100506281638457345/?inviteCode=rh-v1083](https://www.runninghub.cn/post/2100506281638457345/?inviteCode=rh-v1083)
 * **工作流 ID**：`2100506281638457345`
 * **邀请码**：`rh-v1083`
+* **API 标准**：RunningHub OpenAPI v2（`POST /openapi/v2/run/workflow/{id}` 与 `Bearer <API_KEY>`）
 * **引擎**：Minimax H3 4-step Turbo 唇形自举采样 + Qwen3-VL 32B 音画联合注意力
 * **执行命令**：`python3 scripts/runninghub_client.py --dry-run`

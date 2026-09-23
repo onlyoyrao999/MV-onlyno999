@@ -2,9 +2,14 @@
 # -*- coding: utf-8 -*-
 """
 RunningHub ComfyUI Workflow Client for MV-AUTO-PIPELINE (V1.0.6)
+Updated for RunningHub OpenAPI v2 Standard
 Project: AI音乐MV数字人（ngualarith+Minimax H3 Selflift）新二采
 URL: https://www.runninghub.cn/post/2100506281638457345/?inviteCode=rh-v1083
 Workflow ID: 2100506281638457345
+
+OpenAPI v2 Endpoints:
+- Create Task: POST /openapi/v2/run/workflow/{workflowId} (Header: Authorization: Bearer <apiKey>)
+- Query Task:  POST /openapi/v2/query (Header: Authorization: Bearer <apiKey>, Body: {"taskId": "..."})
 """
 
 import os
@@ -23,13 +28,6 @@ DEFAULT_INVITE_CODE = "rh-v1083"
 WORKFLOW_NAME = "AI音乐MV数字人（ngualarith+Minimax H3 Selflift）新二采"
 
 # Workflow 2100506281638457345 Node Mapping Specification
-# Node Types extracted from RunningHub Nuxt ComfyUI definition:
-# - LoadImage: Character protagonist portrait
-# - LoadAudio: Sliced lyric segment / vocal track
-# - Text Multiline: Positive Prompt (with [SHOT], [SINGING] vocal line)
-# - Text Multiline: Negative Prompt (suppression of singing for non-vocal shots)
-# - TrimAudioDuration: Start time and duration fitting
-# - SelfLiftAvatarH3Sampler: Minimax H3 Turbo inference sampler
 NODE_MAPPINGS = {
     "protagonist_image": {"nodeId": "14", "fieldName": "image", "default": "protagonist_ref.png"},
     "audio_segment": {"nodeId": "18", "fieldName": "audio", "default": "vocal_clip.wav"},
@@ -68,86 +66,94 @@ class RunningHubClient:
             {"nodeId": NODE_MAPPINGS["sampler_seed"]["nodeId"], "fieldName": NODE_MAPPINGS["sampler_seed"]["fieldName"], "fieldValue": seed_val}
         ]
 
-    def create_task(self, workflow_id: str = DEFAULT_WORKFLOW_ID, node_info_list: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
-        """Submit a task to RunningHub /task/openapi/create"""
+    def create_task_v2(self, workflow_id: str = DEFAULT_WORKFLOW_ID, node_info_list: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+        """
+        Submit a task to RunningHub OpenAPI v2:
+        POST /openapi/v2/run/workflow/{workflowId}
+        Header: Authorization: Bearer <apiKey>
+        """
         if self.dry_run:
-            mock_task_id = f"rh_task_{int(time.time())}_{workflow_id[-4:]}"
+            mock_task_id = f"rh_v2_task_{int(time.time())}_{workflow_id[-4:]}"
             return {
-                "code": 0,
-                "msg": "SUCCESS (Dry-Run / Sandbox Mode)",
-                "data": {
-                    "taskId": mock_task_id,
-                    "workflowId": workflow_id,
-                    "workflowName": WORKFLOW_NAME,
-                    "status": "QUEUED",
-                    "createdAt": time.strftime("%Y-%m-%d %H:%M:%S")
-                }
+                "taskId": mock_task_id,
+                "status": "QUEUED",
+                "workflowId": workflow_id,
+                "workflowName": WORKFLOW_NAME,
+                "apiVersion": "v2",
+                "createdAt": time.strftime("%Y-%m-%d %H:%M:%S")
             }
 
-        endpoint = f"{self.base_url}/task/openapi/create"
+        endpoint = f"{self.base_url}/openapi/v2/run/workflow/{workflow_id}"
         payload = {
-            "apiKey": self.api_key,
-            "workflowId": workflow_id,
-            "nodeInfoList": node_info_list or []
+            "nodeInfoList": node_info_list or [],
+            "instanceType": "default",
+            "usePersonalQueue": False
+        }
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
+            "User-Agent": "MV-Auto-Pipeline/1.0.6 (RunningHub OpenAPI v2)"
         }
 
         req = urllib.request.Request(
             endpoint,
             data=json.dumps(payload).encode("utf-8"),
-            headers={
-                "Content-Type": "application/json",
-                "User-Agent": "MV-Auto-Pipeline/1.0.6 (RunningHub Integration)"
-            }
+            headers=headers
         )
 
         with urllib.request.urlopen(req, context=self.ssl_ctx, timeout=30) as resp:
             resp_data = json.loads(resp.read().decode("utf-8"))
             return resp_data
 
-    def query_task_outputs(self, task_id: str) -> Dict[str, Any]:
-        """Query task status and outputs via /task/openapi/outputs"""
+    def query_task_v2(self, task_id: str) -> Dict[str, Any]:
+        """
+        Query task status via RunningHub OpenAPI v2:
+        POST /openapi/v2/query
+        Header: Authorization: Bearer <apiKey>
+        Body: {"taskId": "<taskId>"}
+        """
         if self.dry_run:
-            # Simulate realistic progress in dry-run mode
             return {
-                "code": 0,
-                "msg": "SUCCESS",
-                "data": {
-                    "taskId": task_id,
-                    "status": "SUCCESS",
-                    "progress": 100,
-                    "costPoints": 35,
-                    "estimatedUsd": 0.35,
-                    "outputs": [
-                        {
-                            "fileUrl": f"https://rh-images.xiaoyaoyou.com/renders/{task_id}_h3_sync.mp4",
-                            "fileType": "video/mp4",
-                            "duration": 4.17,
-                            "fps": 24,
-                            "resolution": "1920x1080"
-                        }
-                    ]
+                "taskId": task_id,
+                "status": "SUCCESS",
+                "progress": 100,
+                "errorCode": "",
+                "errorMessage": "",
+                "results": [
+                    {
+                        "url": f"https://rh-images.xiaoyaoyou.com/renders/{task_id}_minimax_h3_aligned.mp4",
+                        "type": "video"
+                    }
+                ],
+                "usage": {
+                    "points": 35,
+                    "estimatedUsd": 0.35
                 }
             }
 
-        endpoint = f"{self.base_url}/task/openapi/outputs"
-        payload = {
-            "apiKey": self.api_key,
-            "taskId": task_id
+        endpoint = f"{self.base_url}/openapi/v2/query"
+        payload = {"taskId": task_id}
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}"
         }
 
         req = urllib.request.Request(
             endpoint,
             data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"}
+            headers=headers
         )
 
         with urllib.request.urlopen(req, context=self.ssl_ctx, timeout=30) as resp:
             return json.loads(resp.read().decode("utf-8"))
 
     def render_shot_with_gate_checks(self, shot_meta: Dict[str, Any], image_url: str, audio_url: str) -> Dict[str, Any]:
-        """Full pipeline step: Gate 5 check -> Duration fitting -> RunningHub Dispatch -> Gate 8 validation"""
+        """Full pipeline step: Gate 5 check -> Duration fitting -> RunningHub v2 Dispatch -> Gate 8 validation"""
         shot_id = shot_meta.get("id", "shot_unknown")
-        print(f"\n[RunningHub] === Dispatching Shot {shot_id} to Workflow {DEFAULT_WORKFLOW_ID} ===")
+        print(f"\n[RunningHub OpenAPI v2] === Dispatching Shot {shot_id} to Workflow {DEFAULT_WORKFLOW_ID} ===")
+        print(f"[RunningHub] Endpoint: POST /openapi/v2/run/workflow/{DEFAULT_WORKFLOW_ID}")
+        print(f"[RunningHub] Auth: Bearer {'*' * 8 if self.api_key else '[SANDBOX_SIMULATION]'}")
         print(f"[RunningHub] Workflow: {WORKFLOW_NAME}")
         print(f"[RunningHub] Web URL: https://www.runninghub.cn/post/{DEFAULT_WORKFLOW_ID}/?inviteCode={DEFAULT_INVITE_CODE}")
 
@@ -160,7 +166,7 @@ class RunningHubClient:
         model_req_sec = round(grid_frames / fps, 4)
         print(f"[Duration Fitter] Target: {target_sec}s -> Frame Grid: {grid_frames}f ({model_req_sec}s req)")
 
-        # 2. Build payload
+        # 2. Build payload (OpenAPI v2 Node Info List)
         node_info = self.build_node_info_list(
             image_val=image_url,
             audio_val=audio_url,
@@ -170,17 +176,17 @@ class RunningHubClient:
             seed_val=shot_meta.get("seed", 42)
         )
 
-        # 3. Create RunningHub Task
-        create_res = self.create_task(DEFAULT_WORKFLOW_ID, node_info)
-        task_id = create_res.get("data", {}).get("taskId", f"task_{int(time.time())}")
-        print(f"[RunningHub] Task submitted successfully! Task ID: {task_id}")
+        # 3. Create RunningHub Task via OpenAPI v2
+        task_res = self.create_task_v2(DEFAULT_WORKFLOW_ID, node_info)
+        task_id = task_res.get("taskId", f"rh_v2_task_{int(time.time())}")
+        print(f"[RunningHub v2] Task submitted successfully! Task ID: {task_id}")
 
-        # 4. In production, poll until complete
-        poll_res = self.query_task_outputs(task_id)
+        # 4. Query Task via OpenAPI v2
+        poll_res = self.query_task_v2(task_id)
         video_url = ""
-        if poll_res.get("data", {}).get("outputs"):
-            video_url = poll_res["data"]["outputs"][0]["fileUrl"]
-        print(f"[RunningHub] Video rendered: {video_url}")
+        if poll_res.get("results"):
+            video_url = poll_res["results"][0].get("url", "")
+        print(f"[RunningHub v2 Query] Status: {poll_res.get('status')} | Video: {video_url}")
 
         # 5. Gate 8 alignment result simulation
         gate8_res = {
@@ -194,6 +200,7 @@ class RunningHubClient:
         return {
             "shot_id": shot_id,
             "task_id": task_id,
+            "api_version": "v2",
             "workflow_id": DEFAULT_WORKFLOW_ID,
             "video_url": video_url,
             "duration": target_sec,
@@ -204,8 +211,8 @@ class RunningHubClient:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="RunningHub ComfyUI MV Workflow Client")
-    parser.add_argument("--api-key", type=str, default="", help="RunningHub API Key")
+    parser = argparse.ArgumentParser(description="RunningHub OpenAPI v2 MV Workflow Client")
+    parser.add_argument("--api-key", type=str, default="", help="RunningHub API Key (Bearer token)")
     parser.add_argument("--dry-run", action="store_true", default=False, help="Run in sandbox simulation mode")
     parser.add_argument("--workflow-id", type=str, default=DEFAULT_WORKFLOW_ID, help="RunningHub workflow ID")
     parser.add_argument("--shot-file", type=str, default="", help="JSON file containing shot metadata")
@@ -235,7 +242,7 @@ def main():
         audio_url="https://rh-images.xiaoyaoyou.com/demo/vocal_clip_02.wav"
     )
 
-    print("\n[Execution Result JSON]:")
+    print("\n[Execution Result JSON (OpenAPI v2)]:")
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
 

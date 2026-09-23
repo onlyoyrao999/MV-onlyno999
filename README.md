@@ -12,6 +12,9 @@
 * **项目名称**：`AI音乐MV数字人（ngualarith+Minimax H3 Selflift）新二采`
 * **工作流 ID (Workflow ID)**：`2100506281638457345`
 * **邀请码 / 渠道标**：`rh-v1083`
+* **API 架构标准**：**RunningHub 官方 OpenAPI v2**
+  * **创建任务**：`POST /openapi/v2/run/workflow/{workflowId}`（标头 `Authorization: Bearer <API_KEY>`）
+  * **轮询结果**：`POST /openapi/v2/query`（入参 `{"taskId": "..."}`）
 * **工作流节点与引擎栈**：
   * **采样器**：`SelfLiftAvatarH3Sampler`（Minimax H3 Turbo 4-Step 唇形自举采样）
   * **音画多模态大模型**：`qwen3vl_32b_minimax_h3_int8_convrot` + `minimax_h3_fl2va_bf16`
