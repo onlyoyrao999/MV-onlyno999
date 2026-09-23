@@ -1,0 +1,6 @@
+{
+  "name": "MV-AUTO-PIPELINE",
+  "description": "一键音乐 MV 全自动化生成平台与 SOP Skill 工作台 (V1.0.6)。从歌词时间轴到成片对齐验收，十二步八道关全链打通。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
