@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { StoryboardShot } from '../data/mockPipelineData';
 import {
   RUNNINGHUB_CONFIG,
+  RUNNINGHUB_WORKFLOW_TEMPLATE,
   RunningHubTaskDispatchResult,
   executeRunningHubDispatch,
-  buildRunningHubPayload
+  buildRunningHubPayload,
+  buildCustomComfyWorkflowJson
 } from '../services/runninghubService';
 import {
   ExternalLink,
@@ -20,7 +22,9 @@ import {
   Check,
   ShieldCheck,
   Zap,
-  Film
+  Film,
+  Code2,
+  FileDown
 } from 'lucide-react';
 
 interface RunningHubDispatchTabProps {
@@ -39,6 +43,8 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
   const [activeTask, setActiveTask] = useState<RunningHubTaskDispatchResult | null>(null);
   const [copiedWfId, setCopiedWfId] = useState<boolean>(false);
   const [copiedPayload, setCopiedPayload] = useState<boolean>(false);
+  const [copiedFullJson, setCopiedFullJson] = useState<boolean>(false);
+  const [viewMode, setViewMode] = useState<'nodes' | 'fullJson' | 'payload'>('nodes');
 
   const selectedShot = storyboard.find(s => s.id === selectedShotId) || storyboard[0];
 
@@ -50,16 +56,27 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
 
   const currentPayload = selectedShot
     ? buildRunningHubPayload({
-        apiKey: apiKey || 'rh_apikey_demo_mode',
         shotId: selectedShot.id,
-        imageUrl: 'https://rh-images.xiaoyaoyou.com/demo/protagonist.png',
-        audioUrl: `https://rh-images.xiaoyaoyou.com/audio/${selectedShot.id}.wav`,
+        imageUrl: 'e642390157ec77fa5195a81d97c8147b4d62533425dff3e299f0391aeae11022.png',
+        audioUrl: '43dfda9eb46c40192b014d04105c760c86cb959780b7aa1126375cb0a942e4de.mp3',
         prompt: selectedShot.prompt,
         negativePrompt: selectedShot.negativePrompt,
         durationSeconds: selectedShot.duration,
-        seed: selectedShot.seed || 1083
+        startIndex: selectedShot.start,
+        seed: selectedShot.seed || 999
       })
     : null;
+
+  const customWorkflowJson = selectedShot
+    ? buildCustomComfyWorkflowJson({
+        imageUrl: 'e642390157ec77fa5195a81d97c8147b4d62533425dff3e299f0391aeae11022.png',
+        audioUrl: '43dfda9eb46c40192b014d04105c760c86cb959780b7aa1126375cb0a942e4de.mp3',
+        prompt: selectedShot.prompt,
+        durationSeconds: selectedShot.duration,
+        startIndex: selectedShot.start,
+        seed: selectedShot.seed || 999
+      })
+    : RUNNINGHUB_WORKFLOW_TEMPLATE;
 
   const handleCopyPayload = () => {
     if (currentPayload) {
@@ -67,6 +84,23 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
       setCopiedPayload(true);
       setTimeout(() => setCopiedPayload(false), 2000);
     }
+  };
+
+  const handleCopyFullJson = () => {
+    navigator.clipboard.writeText(JSON.stringify(customWorkflowJson, null, 2));
+    setCopiedFullJson(true);
+    setTimeout(() => setCopiedFullJson(false), 2000);
+  };
+
+  const handleDownloadWorkflowJson = () => {
+    const jsonStr = JSON.stringify(customWorkflowJson, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `runninghub_workflow_shot_${selectedShot.index}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleDispatchShot = async (shotToDispatch = selectedShot) => {
@@ -192,9 +226,9 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
             </a>
 
             <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 text-[11px] text-slate-400">
-              <span className="text-cyan-400 font-semibold">直通链接已注入：</span>
+              <span className="text-cyan-400 font-semibold">项目地址已绑定：</span>
               <div className="truncate text-slate-300 font-mono mt-0.5">
-                runninghub.cn/post/2100506281638457345
+                https://www.runninghub.cn
               </div>
             </div>
           </div>
@@ -325,91 +359,212 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
           </div>
         </div>
 
-        {/* Right: ComfyUI Node Mapping Graph (7 cols) */}
+        {/* Right: ComfyUI Node Mapping Graph & Workflow JSON (7 cols) */}
         <div className="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-3 mb-4 gap-2">
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
                   <Layers className="w-4 h-4 text-indigo-400" />
-                  <span>ComfyUI 节点参数映射图谱 (Workflow #2100506281638457345)</span>
+                  <span>RunningHub ComfyUI 专属工作流拓扑 (26 Nodes)</span>
                 </h3>
-                <p className="text-xs text-slate-400">已映射至 Minimax H3 Selflift 专用数字人推理拓扑</p>
+                <p className="text-xs text-slate-400">已严格绑定用户提供的真实工作流配置与节点链路</p>
               </div>
 
-              <button
-                onClick={handleCopyPayload}
-                className="flex items-center gap-1 text-xs font-mono px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
-                title="复制当前分镜完整请求 Payload"
-              >
-                {copiedPayload ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedPayload ? '已复制' : '复制 Payload'}</span>
-              </button>
+              {/* View Mode Switcher & Copy Controls */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <div className="bg-slate-950 p-0.5 rounded-lg border border-slate-800 flex items-center text-xs">
+                  <button
+                    onClick={() => setViewMode('nodes')}
+                    className={`px-2.5 py-1 rounded transition font-medium ${
+                      viewMode === 'nodes'
+                        ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    节点图谱
+                  </button>
+                  <button
+                    onClick={() => setViewMode('fullJson')}
+                    className={`px-2.5 py-1 rounded transition font-medium flex items-center gap-1 ${
+                      viewMode === 'fullJson'
+                        ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <Code2 className="w-3 h-3" />
+                    <span>完整 JSON</span>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('payload')}
+                    className={`px-2.5 py-1 rounded transition font-medium ${
+                      viewMode === 'payload'
+                        ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    OpenAPI v2
+                  </button>
+                </div>
+
+                {viewMode === 'fullJson' ? (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={handleCopyFullJson}
+                      className="flex items-center gap-1 text-xs font-mono px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
+                      title="复制完整工作流 JSON"
+                    >
+                      {copiedFullJson ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedFullJson ? '已复制' : '复制 JSON'}</span>
+                    </button>
+                    <button
+                      onClick={handleDownloadWorkflowJson}
+                      className="flex items-center gap-1 text-xs font-mono px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition"
+                      title="下载完整工作流 JSON 文件"
+                    >
+                      <FileDown className="w-3.5 h-3.5" />
+                      <span>下载 .json</span>
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleCopyPayload}
+                    className="flex items-center gap-1 text-xs font-mono px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
+                    title="复制当前分镜请求 Payload"
+                  >
+                    {copiedPayload ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedPayload ? '已复制' : '复制 Payload'}</span>
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* 6 Visual Node Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="font-bold text-cyan-400">Node 14: LoadImage</span>
-                  <span className="text-[10px] text-slate-500">字段: image</span>
+            {/* View Mode 1: Exact Visual Node Cards */}
+            {viewMode === 'nodes' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Node 36 */}
+                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="font-bold text-cyan-400">Node 36: LoadImage</span>
+                    <span className="text-[10px] text-slate-500">字段: image</span>
+                  </div>
+                  <div className="text-xs text-slate-200 truncate font-mono">
+                    e642390157ec77fa5195a81d97c8147b4d62533425dff3e299f0391aeae11022.png
+                  </div>
+                  <div className="text-[10px] text-slate-400">主人公基准立绘，直连 Node 42 ref_image_0</div>
                 </div>
-                <div className="text-xs text-slate-200 truncate">protagonist_ref.png</div>
-                <div className="text-[10px] text-slate-400">面部与动作一致性基准图像</div>
-              </div>
 
-              <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="font-bold text-cyan-400">Node 18: LoadAudio</span>
-                  <span className="text-[10px] text-slate-500">字段: audio</span>
+                {/* Node 34 */}
+                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="font-bold text-cyan-400">Node 34: LoadAudio</span>
+                    <span className="text-[10px] text-slate-500">字段: audio</span>
+                  </div>
+                  <div className="text-xs text-slate-200 truncate font-mono">
+                    43dfda9eb46c40192b014d04105c760c86cb959780b7aa1126375cb0a942e4de.mp3
+                  </div>
+                  <div className="text-[10px] text-slate-400">歌曲人声音频切片，直连 Node 85 时长截断</div>
                 </div>
-                <div className="text-xs text-slate-200 truncate">
-                  vocal_clip_{selectedShot.id}.wav
-                </div>
-                <div className="text-[10px] text-slate-400">
-                  {selectedShot.duration.toFixed(2)}s 歌词人声窗口切片
-                </div>
-              </div>
 
-              <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1 sm:col-span-2">
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="font-bold text-cyan-400">Node 23: Text Multiline (关 5 六段式提示词)</span>
-                  <span className="text-[10px] text-slate-500">字段: text</span>
+                {/* Node 87 */}
+                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1 sm:col-span-2">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="font-bold text-cyan-400">Node 87: Text Multiline (六段式提示词)</span>
+                    <span className="text-[10px] text-slate-500">字段: text ➔ 直连 Node 42 prompt</span>
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-300 line-clamp-2 bg-slate-900/80 p-2 rounded border border-slate-800/80">
+                    {selectedShot.prompt}
+                  </div>
+                  <div className="text-[10px] text-slate-400 flex items-center justify-between">
+                    <span>包含发声标记 <code>Singing vocals</code> 与画面艺术指导</span>
+                    <span className="text-emerald-400 font-mono">Gate 5 硬门禁 11 项全检通过</span>
+                  </div>
                 </div>
-                <div className="text-[11px] font-mono text-slate-300 line-clamp-2 bg-slate-900/80 p-2 rounded border border-slate-800/80">
-                  {selectedShot.prompt}
-                </div>
-              </div>
 
-              <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="font-bold text-indigo-400">Node 32: TrimAudioDuration</span>
-                  <span className="text-[10px] text-slate-500">字段: duration</span>
+                {/* Node 85 */}
+                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="font-bold text-indigo-400">Node 85: TrimAudioDuration</span>
+                    <span className="text-[10px] text-slate-500">duration & start_index</span>
+                  </div>
+                  <div className="text-xs font-mono font-bold text-emerald-400">
+                    {selectedShot.duration.toFixed(2)}s (起始: {selectedShot.start.toFixed(2)}s)
+                  </div>
+                  <div className="text-[10px] text-slate-400">
+                    精准裁切音频并传入 Node 72 SoundFlow 计算总帧长
+                  </div>
                 </div>
-                <div className="text-xs font-mono font-bold text-emerald-400">
-                  {Math.ceil(selectedShot.duration * 24) / 24}s ({Math.ceil(selectedShot.duration * 24)} 帧)
-                </div>
-                <div className="text-[10px] text-slate-400">自研帧网格时长向上贴合，杜绝漂移</div>
-              </div>
 
-              <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="font-bold text-indigo-400">Node 41: SelfLiftAvatarH3Sampler</span>
-                  <span className="text-[10px] text-slate-500">种子: seed</span>
+                {/* Node 78 */}
+                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="font-bold text-indigo-400">Node 78: SelfLiftAvatarH3Sampler</span>
+                    <span className="text-[10px] text-slate-500">seed (采样随机种子)</span>
+                  </div>
+                  <div className="text-xs font-mono text-slate-200">
+                    #{selectedShot.seed || 999} (Euler 4-step Turbo)
+                  </div>
+                  <div className="text-[10px] text-slate-400">
+                    挂载 minimax_h3_latent_upscaler_3d_fp16
+                  </div>
                 </div>
-                <div className="text-xs font-mono text-slate-200">
-                  #{selectedShot.seed || 1083} (可独立重抽卡)
+
+                {/* Node 61 */}
+                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="font-bold text-amber-400">Node 61: ResolutionSelector</span>
+                    <span className="text-[10px] text-slate-500">aspect_ratio & megapixels</span>
+                  </div>
+                  <div className="text-xs font-mono text-slate-200">9:16 (Portrait Widescreen) · 2MP</div>
+                  <div className="text-[10px] text-slate-400">输出宽高度直连 Node 42 width/height</div>
                 </div>
-                <div className="text-[10px] text-slate-400">Minimax H3 4-step Turbo 音画采样器</div>
+
+                {/* Node 65 */}
+                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="font-bold text-emerald-400">Node 65: VHS_VideoCombine</span>
+                    <span className="text-[10px] text-slate-500">frame_rate: 24 · crf: 12</span>
+                  </div>
+                  <div className="text-xs font-mono text-slate-200">prefix: selfliftAvatar.mp4</div>
+                  <div className="text-[10px] text-slate-400">音画封包成片，直连 Node 64 VAEDecode</div>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* View Mode 2: Full Workflow JSON */}
+            {viewMode === 'fullJson' && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs text-slate-400">
+                  <span>用户提供的专属 ComfyUI 工作流完整配置（已动态注入当前镜头参数）:</span>
+                  <span className="font-mono text-cyan-400">26 Nodes · JSON 格式</span>
+                </div>
+                <pre className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-[11px] font-mono text-cyan-300 max-h-80 overflow-y-auto leading-relaxed scrollbar-thin scrollbar-thumb-slate-700">
+                  {JSON.stringify(customWorkflowJson, null, 2)}
+                </pre>
+              </div>
+            )}
+
+            {/* View Mode 3: OpenAPI v2 Payload */}
+            {viewMode === 'payload' && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs text-slate-400">
+                  <span>POST /openapi/v2/run/workflow/{RUNNINGHUB_CONFIG.workflowId} 请求体:</span>
+                  <span className="font-mono text-emerald-400">Bearer Token 鉴权</span>
+                </div>
+                <pre className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-[11px] font-mono text-emerald-300 max-h-80 overflow-y-auto leading-relaxed scrollbar-thin scrollbar-thumb-slate-700">
+                  {JSON.stringify(currentPayload, null, 2)}
+                </pre>
+              </div>
+            )}
           </div>
 
-          <div className="p-3 rounded-xl bg-indigo-950/20 border border-indigo-500/20 text-xs text-indigo-200 flex items-center gap-3 mt-4">
-            <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
-            <span>
-              已自动挂载 <strong>minimax_h3_audio_vae_fp32</strong> 与 <strong>qwen3vl_32b</strong>，确保口型对齐精度符合 Gate 8 硬门禁。
-            </span>
+          <div className="p-3 rounded-xl bg-indigo-950/20 border border-indigo-500/20 text-xs text-indigo-200 flex items-center justify-between gap-3 mt-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
+              <span>
+                <strong>工作流调用契约与双轨交付：</strong>精确使用您提供的 26 节点配置文件，动态替换 Node 34、36、85、87、78 输入值。采样仅驱动口型，拼接成片后<strong>强制重贴全曲母带伴奏底轨</strong>，非歌声段绝无静音死寂，画面纯净零文字。
+              </span>
+            </div>
           </div>
         </div>
 

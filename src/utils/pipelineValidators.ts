@@ -133,22 +133,50 @@ export function validateGate5Prompt(shot: StoryboardShot, hasProtagonist: boolea
     });
   }
 
-  // Check 7: Negative prompt lip suppression
-  const hasNegLip = negPrompt.toLowerCase().includes('singing') || negPrompt.toLowerCase().includes('lip-sync') || negPrompt.toLowerCase().includes('mouth open');
-  if (!isLipSync) {
+  // Check 7: Negative prompt lip suppression & strict screen text suppression (MV画面不要出现文字)
+  const negLower = negPrompt.toLowerCase();
+  const promptLower = prompt.toLowerCase();
+  
+  const textSuppressKeywords = ['text', 'subtitles', 'lyrics', 'words', 'watermark', 'captions'];
+  const hasTextSuppress = textSuppressKeywords.some(k => negLower.includes(k));
+  
+  const forbiddenScreenText = ['subtitles on screen', 'burned-in text', 'lyrics text overlaid', 'words written on screen', 'watermark on video'];
+  const hasTextInstruction = forbiddenScreenText.some(t => promptLower.includes(t));
+  
+  const hasNegLip = negLower.includes('singing') || negLower.includes('lip-sync') || negLower.includes('mouth open');
+
+  if (hasTextInstruction) {
     results.push({
-      id: '07_CHECK_NEG_LIP',
-      name: '负向提示词口型压制',
-      passed: hasNegLip,
-      message: hasNegLip ? 'Negative Prompt 已注入 singing/mouth open 压制' : 'Negative 必须填入 singing, mouth open, lip-sync 压制口型伪影',
+      id: '07_CHECK_NEG_LIP_AND_TEXT',
+      name: '画面纯净度与负向防文字压制',
+      passed: false,
+      message: '正向提示词严禁要求画面显示文字/字幕 (MV画面严禁烧录任何文字或乱码)',
+      severity: 'CRITICAL'
+    });
+  } else if (!hasTextSuppress) {
+    results.push({
+      id: '07_CHECK_NEG_LIP_AND_TEXT',
+      name: '画面纯净度与负向防文字压制',
+      passed: false,
+      message: '负向提示词必须包含防文字压制词汇 (text, subtitles, lyrics, words, watermark)，杜绝画面生成文字乱码',
+      severity: 'CRITICAL'
+    });
+  } else if (!isLipSync && !hasNegLip) {
+    results.push({
+      id: '07_CHECK_NEG_LIP_AND_TEXT',
+      name: '画面纯净度与负向防文字压制',
+      passed: false,
+      message: '非口型段 Negative 必须包含 singing, mouth open, lip-sync 强行闭嘴，并包含 text/subtitles 防文字压制',
       severity: 'CRITICAL'
     });
   } else {
     results.push({
-      id: '07_CHECK_NEG_LIP',
-      name: '口型段负向免除',
+      id: '07_CHECK_NEG_LIP_AND_TEXT',
+      name: '画面纯净度与负向防文字压制',
       passed: true,
-      message: '口型段负向已豁免口型压制',
+      message: isLipSync
+        ? '已注入防文字/水印压制词，纯净胶片画质，口型动势正常放行'
+        : '双重压制就绪：已封死嘴部张开动势，并全面压制画面文字/字幕/水印',
       severity: 'CRITICAL'
     });
   }

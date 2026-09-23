@@ -19,7 +19,7 @@ const SPEC_FILES = [
 
 ## 🔗 RunningHub 云端工作流项目绑定
 * 官方平台：RunningHub (www.runninghub.cn)
-* 专属项目网址：https://www.runninghub.cn/post/2100506281638457345/?inviteCode=rh-v1083
+* 项目地址：https://www.runninghub.cn
 * 项目名称：AI音乐MV数字人（ngualarith+Minimax H3 Selflift）新二采
 * 工作流 ID (Workflow ID)：2100506281638457345
 * 邀请码 / 渠道标：rh-v1083
@@ -55,9 +55,9 @@ description: >
 AI 做的 MV，第一眼就露馅的地方不是画面不够炫，而是嘴和歌对不上。
 
 六大铁律：
-A. 音乐是唯一的时间基准（歌词一行不能少，切点只落在歌词句尾）
+A. 音乐是唯一的时间基准与伴奏贯穿保活（段长切点源于歌词，全曲伴奏底轨贯穿，非歌声段杜绝静音）
 B. 只有中近景才对口型（ECU/CU/MCU/MS允许开口，远景全景必须硬闭嘴，占比45%，连续<=3段）
-C. 唱歌不是说台词（独立行 Singing vocals: "..."，非口型正负双向压制）
+C. 唱歌不是说台词与画面纯净铁律（独立行 Singing vocals: "..."，MV画面严禁文字出现，负向强压 text/lyrics/subtitles）
 D. 不猜字段、不烧冤枉钱（先体检工作流，去参考化，指纹缓存，双池真钱封顶）
 E. 八道关 + 对齐三验（机检硬门禁 + HTML审查，滞后量<=80ms，相关度>=0.78，能量>=-36dBFS）
 F. 会自己长本事（复盘三问，代码、文档、自检清单三位一体同步发版）`
@@ -135,7 +135,7 @@ def calculate_duration_fitting(window_start, window_end, fps=24):
     path: '/skills/mv-auto-pipeline/scripts/runninghub_client.py',
     content: `#!/usr/bin/env python3
 # RunningHub ComfyUI Workflow Client (Workflow ID: 2100506281638457345)
-# URL: https://www.runninghub.cn/post/2100506281638457345/?inviteCode=rh-v1083
+# URL: https://www.runninghub.cn
 # Project: AI音乐MV数字人（ngualarith+Minimax H3 Selflift）新二采
 
 import os, sys, json, time, urllib.request, ssl
@@ -168,17 +168,31 @@ class RunningHubClient:
     content: `# RunningHub 项目与工作流调用技术规范
 
 * 官方平台: RunningHub (www.runninghub.cn)
-* 专属网址: https://www.runninghub.cn/post/2100506281638457345/?inviteCode=rh-v1083
-* 工作流 ID: 2100506281638457345 (Minimax H3 Selflift + Qwen3-VL 32B)
+* 项目地址: https://www.runninghub.cn
+* 工作流 ID: 2100506281638457345 (AI音乐MV数字人（ngualarith+Minimax H3 Selflift）新二采)
 * 邀请码: rh-v1083
+* 架构规范: 仅使用用户提供的专属 ComfyUI 工作流配置 (26 Nodes)
 
-ComfyUI 节点映射列表:
-- Node 14: LoadImage (主人公立绘)
-- Node 18: LoadAudio (歌词人声切片)
-- Node 23: Text Multiline (六段式提示词，含独立发声行 Singing vocals: "...")
-- Node 27: Text Multiline (非口型段负向嘴唇静止压制)
-- Node 32: TrimAudioDuration (帧网格时长向上贴合)
-- Node 41: SelfLiftAvatarH3Sampler (Minimax H3 唇形自举采样)`
+ComfyUI 真实节点映射列表:
+- Node 36: LoadImage (主人公立绘，输入 image)
+- Node 34: LoadAudio (歌词人声切片，输入 audio)
+- Node 85: TrimAudioDuration (音频裁切时长与开始点，输入 duration / start_index)
+- Node 87: Text Multiline (六段式提示词，直连 Node 42 MiniMaxH3 prompt)
+- Node 78: SelfLiftAvatarH3Sampler (Minimax H3 唇形自举采样种子 seed)
+- Node 61: ResolutionSelector (画幅比例 9:16 Portrait Widescreen / 16:9)
+- Node 71: ComfyMathExpression (自研帧网格数学公式向上贴合)
+- Node 77: ConditioningZeroOut (负向条件清零)
+- Node 65: VHS_VideoCombine (24fps 音画封装，前缀 selfliftAvatar)`
+  },
+  {
+    id: 'runninghub_workflow_json',
+    name: 'runninghub_workflow.json',
+    type: 'json',
+    path: '/skills/mv-auto-pipeline/references/runninghub_workflow.json',
+    content: `// 用户专属 ComfyUI 26 节点工作流配置 (Workflow ID: 2100506281638457345)
+// 包含: LoadAudio(34), LoadImage(36), MiniMaxH3(42), VHS_VideoCombine(65),
+// SelfLiftAvatarH3Sampler(78), TrimAudioDuration(85), Text Multiline(87)...
+// 详见工程路径: /src/data/runninghubWorkflowConfig.json`
   }
 ];
 

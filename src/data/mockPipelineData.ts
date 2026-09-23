@@ -103,7 +103,7 @@ export const GATES_DATA: GateDefinition[] = [
       "4. 绝无 saying/talking 等对白动词",
       "5. 口型段仅限特写/中景 (ECU/CU/MCU/MS)",
       "6. 非口型段正向必须含 mouth naturally closed",
-      "7. 非口型段 Negative 必须压制 singing, mouth open",
+      "7. 负向必须注入 text/subtitles/lyrics/watermark 防文字压制 (MV画面严禁任何文字出现)",
       "8. 人物识别特征一致性锚点",
       "9. 无日夜/光照逻辑自相矛盾词",
       "10. 短窗口动作幅度适配度",
@@ -137,7 +137,12 @@ export const GATES_DATA: GateDefinition[] = [
     isHardBarrier: false,
     description: "向上对齐帧网格并精准裁切。输出两条成片：一条重贴无损原曲母带交付，一条内嵌逐段音频用于交叉验证。",
     reviewMode: "Machine + Human HTML",
-    keyChecks: ["时长贴合消除浮点漂移", "母带原声强制替换合成", "双轨盲审比对就绪"]
+    keyChecks: [
+      "全曲伴奏底轨贯穿保活 (前奏/间奏/尾奏/气口杜绝任何静音断层)",
+      "时长贴合消除浮点漂移",
+      "母带原声强制替换合成",
+      "双轨盲审比对就绪"
+    ]
   },
   {
     id: 8,
@@ -195,7 +200,7 @@ Moody cinematic neon teal and sodium-vapor orange reflections on wet surfaces, h
 
 [CAMERA_TECH]
 8k resolution, anamorphic lens flare, photorealistic cinematic film grain, 24fps motion blur.`,
-    negativePrompt: "singing, mouth open, lip-sync, talking, speaking, vocalizing, open lips, bright daylight, cartoon, 3d render",
+    negativePrompt: "text, words, subtitles, lyrics, captions, watermark, logo, typography, singing, mouth open, lip-sync, talking, speaking, vocalizing, open lips, bright daylight, cartoon, 3d render",
     fingerprint: "a93f1d8c0b24e671",
     pool: "spot_free",
     costUsd: 0.0,
@@ -232,7 +237,7 @@ Soft amber interior key light caressing her cheekbones, moody blue backlight fro
 
 [CAMERA_TECH]
 Photorealistic, cinematic Kodak Vision3 color profile, shallow depth of field, natural 24fps shutter cadence.`,
-    negativePrompt: "cartoon, 3d render, distorted face, oversaturated, unnatural expressions, lowres",
+    negativePrompt: "text, words, subtitles, lyrics, captions, watermark, logo, typography, cartoon, 3d render, distorted face, oversaturated, unnatural expressions, lowres",
     fingerprint: "f428c90e55b172a3",
     pool: "spot_free",
     costUsd: 0.0,
@@ -269,7 +274,7 @@ Chiaroscuro lighting, rhythmically shifting tunnel illumination with emerald and
 
 [CAMERA_TECH]
 8k, cinematic anamorphic bokeh, high textural realism, authentic low-light film look.`,
-    negativePrompt: "deformed fingers, talking dialogue, flat lighting, CG rendering, jitter",
+    negativePrompt: "text, words, subtitles, lyrics, captions, watermark, logo, typography, deformed fingers, talking dialogue, flat lighting, CG rendering, jitter",
     fingerprint: "b715e290dc419a64",
     pool: "priority_paid",
     costUsd: 0.35,
@@ -305,7 +310,7 @@ Deep sapphire blue ambient with sparkling gold specular highlights inside each f
 
 [CAMERA_TECH]
 Arri Alexa 65 look, ultra-sharp macro focus, buttery smooth motion blur, natural optics.`,
-    negativePrompt: "singing, mouth open, lip-sync, talking, speaking, human face, cartoon, digital noise",
+    negativePrompt: "text, words, subtitles, lyrics, captions, watermark, logo, typography, singing, mouth open, lip-sync, talking, speaking, human face, cartoon, digital noise",
     fingerprint: "c3098f12a441e88d",
     pool: "spot_free",
     costUsd: 0.0,
@@ -342,7 +347,7 @@ Vibrant cinematic rim lighting, backlit rain particles creating a glowing halo, 
 
 [CAMERA_TECH]
 8k cinematic mastery, 35mm master prime, volumetric fog, Kodak 5219 film grain.`,
-    negativePrompt: "mouth closed, speaking tone, plastic look, floating limbs, stuttering frames",
+    negativePrompt: "text, words, subtitles, lyrics, captions, watermark, logo, typography, mouth closed, speaking tone, plastic look, floating limbs, stuttering frames",
     fingerprint: "d891e4f3aa274c10",
     pool: "priority_paid",
     costUsd: 0.45,
@@ -379,7 +384,7 @@ Warm golden hour glow from an unseen neon shop window warmly illuminating her ex
 
 [CAMERA_TECH]
 8k photorealistic perfection, organic camera shake, natural facial skin micro-textures.`,
-    negativePrompt: "talking, speech dialogue, wooden expression, low resolution, warped features",
+    negativePrompt: "text, words, subtitles, lyrics, captions, watermark, logo, typography, talking, speech dialogue, wooden expression, low resolution, warped features",
     fingerprint: "e10287a93cd561f2",
     pool: "priority_paid",
     costUsd: 0.45,
@@ -415,7 +420,7 @@ Cool blue and lavender nocturnal tones, soft gradient diffusion, atmospheric per
 
 [CAMERA_TECH]
 Cinema-grade wide lens, pristine composition, slow shutter filmic trail.`,
-    negativePrompt: "singing, mouth open, lip-sync, talking, turning around, cartoon, 3d CGI",
+    negativePrompt: "text, words, subtitles, lyrics, captions, watermark, logo, typography, singing, mouth open, lip-sync, talking, turning around, cartoon, 3d CGI",
     fingerprint: "92bb34f820c78914",
     pool: "spot_free",
     costUsd: 0.0,
@@ -429,9 +434,9 @@ Cinema-grade wide lens, pristine composition, slow shutter filmic trail.`,
 export const SIX_IRON_RULES_LIST = [
   {
     code: "A",
-    title: "音乐是唯一的时间基准",
-    tagline: "Music As Single Source of Truth",
-    rule: "段长、切点、口型位置全部由歌词时间轴推导。严禁先画画面再去凑音乐。歌词一行不能少，间奏Solo必须显式成段打标。"
+    title: "音乐是唯一的时间基准（全曲伴奏贯穿保活）",
+    tagline: "Music As Single Source of Truth & Continuous BGM",
+    rule: "段长、切点、口型位置全部由歌词时间轴推导。严禁先画画面再去凑音乐。前奏、间奏、尾奏由母带器乐伴奏 100% 贯通铺底，绝不出现任何静音断层（没有歌曲的地方也保持伴奏流淌）。歌词一行不能少，间奏Solo必须显式成段打标。"
   },
   {
     code: "B",
@@ -441,9 +446,9 @@ export const SIX_IRON_RULES_LIST = [
   },
   {
     code: "C",
-    title: "唱歌不是说台词",
-    tagline: "Singing Is Not Dialogue",
-    rule: "发声行以 Singing vocals: \"...\" 独立成行，绝不能写成 saying/talking。非口型段正向强行注入 mouth naturally closed，负向必须压制 lip-sync。"
+    title: "唱歌不是说台词（画面纯净铁律，严禁出现文字）",
+    tagline: "Singing Is Not Dialogue & Zero Screen Text",
+    rule: "发声行以 Singing vocals: \"...\" 独立成行，绝不能写成 saying/talking。MV画面严禁任何文字出现：正向禁止索要字幕文字，负向必须强行封死 text, words, subtitles, lyrics, watermark，杜绝画面出现乱码。非口型段正向强行注入 mouth naturally closed，负向必须压制 lip-sync。"
   },
   {
     code: "D",

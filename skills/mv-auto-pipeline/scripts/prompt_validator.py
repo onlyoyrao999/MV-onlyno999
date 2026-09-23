@@ -76,15 +76,29 @@ def validate_prompt(shot_meta: dict) -> dict:
     else:
         passed.append("06_CHECK_LIP_STILL: Lip-sync shot - mouth action allowed")
 
-    # Check 7: Negative prompt lip suppression for non-lip-sync shots
-    if not is_lip_sync:
-        has_neg_suppress = ("singing" in neg_prompt.lower() or "lip-sync" in neg_prompt.lower() or "mouth open" in neg_prompt.lower())
-        if has_neg_suppress:
-            passed.append("07_CHECK_NEG_LIP: Negative prompt suppresses mouth motion and singing")
+    # Check 7: Negative prompt lip suppression and strict screen text suppression
+    neg_lowered = neg_prompt.lower()
+    prompt_lowered = prompt.lower()
+    
+    # 7a. Zero Screen Text Assertion (MV画面严禁任何文字/乱码/字幕出现)
+    forbidden_screen_text = ["subtitles on screen", "burned-in text", "lyrics text overlaid", "words written on screen", "watermark on video"]
+    has_text_instruction = any(t in prompt_lowered for t in forbidden_screen_text)
+    
+    text_suppress_keywords = ["text", "subtitles", "lyrics", "words", "watermark", "captions"]
+    has_text_suppress = any(k in neg_lowered for k in text_suppress_keywords)
+    
+    if has_text_instruction:
+        failed.append("07_CHECK_NEG_LIP_AND_TEXT: Positive prompt must NOT request text/subtitles on screen (MV画面严禁出现文字)")
+    elif not has_text_suppress:
+        failed.append("07_CHECK_NEG_LIP_AND_TEXT: Negative prompt must contain text suppression keywords ('text, subtitles, lyrics, words, watermark') to prevent distorted text/subtitles on video screen")
+    elif not is_lip_sync:
+        has_neg_lip = ("singing" in neg_lowered or "lip-sync" in neg_lowered or "mouth open" in neg_lowered)
+        if has_neg_lip:
+            passed.append("07_CHECK_NEG_LIP_AND_TEXT: Negative prompt suppresses mouth motion AND suppresses screen text/subtitles")
         else:
-            failed.append("07_CHECK_NEG_LIP: Negative prompt must contain 'singing, mouth open, lip-sync'")
+            failed.append("07_CHECK_NEG_LIP_AND_TEXT: Non-lip-sync negative prompt must contain 'singing, mouth open, lip-sync' in addition to text suppression")
     else:
-        passed.append("07_CHECK_NEG_LIP: Lip-sync shot negative check bypassed")
+        passed.append("07_CHECK_NEG_LIP_AND_TEXT: Negative prompt contains screen text/watermark suppression, lip-sync allowed")
 
     # Check 8: Character anchor presence if protagonist mode
     if shot_meta.get("has_protagonist", True):
@@ -155,7 +169,7 @@ Moody cinematic amber and emerald lighting, soft specular bokeh highlights on gl
 [CAMERA_TECH]
 8k, photorealistic film look, delicate grain, high dynamic range.
 """,
-        "negative_prompt": "cartoon, 3d render, deformed face, blur"
+        "negative_prompt": "text, words, subtitles, lyrics, captions, watermark, logo, typography, cartoon, 3d render, deformed face, blur"
     }
 
     res = validate_prompt(sample_shot)

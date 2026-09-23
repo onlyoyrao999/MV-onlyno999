@@ -8,7 +8,7 @@
 ## 🔗 RunningHub 云端工作流项目绑定
 
 * **官方平台**：[RunningHub (www.runninghub.cn)](https://www.runninghub.cn)
-* **专属项目网址**：[https://www.runninghub.cn/post/2100506281638457345/?inviteCode=rh-v1083](https://www.runninghub.cn/post/2100506281638457345/?inviteCode=rh-v1083)
+* **项目地址**：[https://www.runninghub.cn](https://www.runninghub.cn)
 * **项目名称**：`AI音乐MV数字人（ngualarith+Minimax H3 Selflift）新二采`
 * **工作流 ID (Workflow ID)**：`2100506281638457345`
 * **邀请码 / 渠道标**：`rh-v1083`
@@ -113,7 +113,7 @@ python3 ./skills/mv-auto-pipeline/scripts/gate6_checker.py
    - **关 5 11 项提示词机检面板**：11 颗机检灯实时断言，支持一键规范重构；
    - **一键直通**：单镜一键派发至 RunningHub 渲染。
 4. **RunningHub 云端调度中心 (RunningHub Dispatch)**：
-   - 直通 [www.runninghub.cn 工作流 2100506281638457345](https://www.runninghub.cn/post/2100506281638457345/?inviteCode=rh-v1083)；
+   - 直通 [RunningHub 平台 (www.runninghub.cn)](https://www.runninghub.cn)；
    - 沙箱体验模式与云端 Live API 双模运行；
    - ComfyUI 节点参数可视化映射与一键复制 Payload；
    - 实时任务日志终端与 Gate 8 对齐三验判定。

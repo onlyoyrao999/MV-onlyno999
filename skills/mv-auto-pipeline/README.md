@@ -28,7 +28,7 @@ skills/mv-auto-pipeline/
 ## RunningHub 绑定工作流
 
 * **平台**：[RunningHub (www.runninghub.cn)](https://www.runninghub.cn)
-* **项目直达**：[https://www.runninghub.cn/post/2100506281638457345/?inviteCode=rh-v1083](https://www.runninghub.cn/post/2100506281638457345/?inviteCode=rh-v1083)
+* **项目地址**：[https://www.runninghub.cn](https://www.runninghub.cn)
 * **工作流 ID**：`2100506281638457345`
 * **邀请码**：`rh-v1083`
 * **API 标准**：RunningHub OpenAPI v2（`POST /openapi/v2/run/workflow/{id}` 与 `Bearer <API_KEY>`）

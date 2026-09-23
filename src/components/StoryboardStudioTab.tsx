@@ -77,7 +77,7 @@ Cinematic split amber interior key light and cool cyan window reflections.
 
 [CAMERA_TECH]
 8k, photorealistic film look, shallow depth of field, 24fps motion blur.`;
-      compliantNeg = "talking, dialogue, cartoon, 3d render, distorted face, lowres";
+      compliantNeg = "text, words, subtitles, lyrics, watermark, captions, logo, typography, letters, signature, username, font, burned-in text, talking, dialogue, cartoon, 3d render, distorted face, lowres";
     } else {
       compliantPrompt = `[SHOT]
 Shot scale: ${scale}. Camera motion: Slow atmospheric pan.
@@ -96,7 +96,7 @@ Deep cyan and emerald nocturnal palette, rich contrast.
 
 [CAMERA_TECH]
 Cinematic 8k, anamorphic lens flare, natural film grain.`;
-      compliantNeg = "singing, mouth open, lip-sync, talking, speaking, vocalizing, open lips, cartoon, 3d CGI";
+      compliantNeg = "text, words, subtitles, lyrics, watermark, captions, logo, typography, letters, signature, username, font, burned-in text, singing, mouth open, lip-sync, talking, speaking, vocalizing, open lips, cartoon, 3d CGI";
     }
 
     handleUpdateActiveShot({
@@ -330,15 +330,26 @@ Cinematic 8k, anamorphic lens flare, natural film grain.`;
               </div>
 
               <div>
-                <label className="block text-slate-300 text-xs font-semibold mb-1">
-                  负向提示词 (Negative Prompt - 非口型段必须压制 singing, mouth open)
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-slate-300 text-xs font-semibold">
+                    负向提示词 (Negative Prompt - 画面防文字/水印必填；非口型段强行闭嘴)
+                  </label>
+                  <span className="text-[10px] text-cyan-400 font-mono flex items-center gap-1">
+                    <span>🚫 画面严禁文字</span>
+                    <span className="text-slate-500">|</span>
+                    <span>🎵 伴奏底轨贯穿</span>
+                  </span>
+                </div>
                 <input
                   type="text"
                   value={activeShot.negativePrompt}
                   onChange={(e) => handleUpdateActiveShot({ negativePrompt: e.target.value })}
+                  placeholder="text, words, subtitles, lyrics, captions, watermark, logo, typography..."
                   className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-cyan-500"
                 />
+                <p className="text-[11px] text-slate-400 mt-1">
+                  铁律保障：已硬性屏蔽文字/字幕/歌词水印，杜绝模型在画面中渲染乱码；成片字幕统一由后期 SRT 挂载。
+                </p>
               </div>
             </div>
           </div>

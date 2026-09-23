@@ -4,7 +4,7 @@
 RunningHub ComfyUI Workflow Client for MV-AUTO-PIPELINE (V1.0.6)
 Updated for RunningHub OpenAPI v2 Standard
 Project: AI音乐MV数字人（ngualarith+Minimax H3 Selflift）新二采
-URL: https://www.runninghub.cn/post/2100506281638457345/?inviteCode=rh-v1083
+URL: https://www.runninghub.cn
 Workflow ID: 2100506281638457345
 
 OpenAPI v2 Endpoints:
@@ -27,15 +27,16 @@ DEFAULT_WORKFLOW_ID = "2100506281638457345"
 DEFAULT_INVITE_CODE = "rh-v1083"
 WORKFLOW_NAME = "AI音乐MV数字人（ngualarith+Minimax H3 Selflift）新二采"
 
-# Workflow 2100506281638457345 Node Mapping Specification
+# Workflow 2100506281638457345 Exact Node Mapping Specification (26 Nodes)
 NODE_MAPPINGS = {
-    "protagonist_image": {"nodeId": "14", "fieldName": "image", "default": "protagonist_ref.png"},
-    "audio_segment": {"nodeId": "18", "fieldName": "audio", "default": "vocal_clip.wav"},
-    "prompt_text": {"nodeId": "23", "fieldName": "text", "default": ""},
-    "negative_prompt": {"nodeId": "27", "fieldName": "text", "default": ""},
-    "duration_trim": {"nodeId": "32", "fieldName": "duration", "default": 4.0},
-    "sampler_seed": {"nodeId": "41", "fieldName": "seed", "default": 42},
-    "resolution": {"nodeId": "48", "fieldName": "resolution", "default": "1920x1080"}
+    "audio_segment": {"nodeId": "34", "fieldName": "audio", "default": "43dfda9eb46c40192b014d04105c760c86cb959780b7aa1126375cb0a942e4de.mp3"},
+    "protagonist_image": {"nodeId": "36", "fieldName": "image", "default": "e642390157ec77fa5195a81d97c8147b4d62533425dff3e299f0391aeae11022.png"},
+    "duration_trim": {"nodeId": "85", "fieldName": "duration", "default": 10.0},
+    "start_index": {"nodeId": "85", "fieldName": "start_index", "default": 0},
+    "prompt_text": {"nodeId": "87", "fieldName": "text", "default": "女孩唱歌"},
+    "sampler_seed": {"nodeId": "78", "fieldName": "seed", "default": 999},
+    "resolution": {"nodeId": "61", "fieldName": "aspect_ratio", "default": "9:16 (Portrait Widescreen)"},
+    "video_combine": {"nodeId": "65", "fieldName": "frame_rate", "default": 24}
 }
 
 
@@ -53,16 +54,16 @@ class RunningHubClient:
         image_val: str,
         audio_val: str,
         prompt_val: str,
-        negative_val: str,
         duration_val: float,
-        seed_val: int = 42
+        start_index_val: float = 0.0,
+        seed_val: int = 999
     ) -> List[Dict[str, Any]]:
         return [
             {"nodeId": NODE_MAPPINGS["protagonist_image"]["nodeId"], "fieldName": NODE_MAPPINGS["protagonist_image"]["fieldName"], "fieldValue": image_val},
             {"nodeId": NODE_MAPPINGS["audio_segment"]["nodeId"], "fieldName": NODE_MAPPINGS["audio_segment"]["fieldName"], "fieldValue": audio_val},
-            {"nodeId": NODE_MAPPINGS["prompt_text"]["nodeId"], "fieldName": NODE_MAPPINGS["prompt_text"]["fieldName"], "fieldValue": prompt_val},
-            {"nodeId": NODE_MAPPINGS["negative_prompt"]["nodeId"], "fieldName": NODE_MAPPINGS["negative_prompt"]["fieldName"], "fieldValue": negative_val},
             {"nodeId": NODE_MAPPINGS["duration_trim"]["nodeId"], "fieldName": NODE_MAPPINGS["duration_trim"]["fieldName"], "fieldValue": duration_val},
+            {"nodeId": NODE_MAPPINGS["start_index"]["nodeId"], "fieldName": NODE_MAPPINGS["start_index"]["fieldName"], "fieldValue": start_index_val},
+            {"nodeId": NODE_MAPPINGS["prompt_text"]["nodeId"], "fieldName": NODE_MAPPINGS["prompt_text"]["fieldName"], "fieldValue": prompt_val},
             {"nodeId": NODE_MAPPINGS["sampler_seed"]["nodeId"], "fieldName": NODE_MAPPINGS["sampler_seed"]["fieldName"], "fieldValue": seed_val}
         ]
 
@@ -155,7 +156,7 @@ class RunningHubClient:
         print(f"[RunningHub] Endpoint: POST /openapi/v2/run/workflow/{DEFAULT_WORKFLOW_ID}")
         print(f"[RunningHub] Auth: Bearer {'*' * 8 if self.api_key else '[SANDBOX_SIMULATION]'}")
         print(f"[RunningHub] Workflow: {WORKFLOW_NAME}")
-        print(f"[RunningHub] Web URL: https://www.runninghub.cn/post/{DEFAULT_WORKFLOW_ID}/?inviteCode={DEFAULT_INVITE_CODE}")
+        print(f"[RunningHub] Web URL: https://www.runninghub.cn")
 
         # 1. Compute duration fitting
         start_sec = shot_meta.get("start", 0.0)
@@ -168,12 +169,12 @@ class RunningHubClient:
 
         # 2. Build payload (OpenAPI v2 Node Info List)
         node_info = self.build_node_info_list(
-            image_val=image_url,
-            audio_val=audio_url,
+            image_val=image_url or "e642390157ec77fa5195a81d97c8147b4d62533425dff3e299f0391aeae11022.png",
+            audio_val=audio_url or "43dfda9eb46c40192b014d04105c760c86cb959780b7aa1126375cb0a942e4de.mp3",
             prompt_val=shot_meta.get("prompt", ""),
-            negative_val=shot_meta.get("negative_prompt", ""),
             duration_val=model_req_sec,
-            seed_val=shot_meta.get("seed", 42)
+            start_index_val=start_sec,
+            seed_val=shot_meta.get("seed", 999)
         )
 
         # 3. Create RunningHub Task via OpenAPI v2

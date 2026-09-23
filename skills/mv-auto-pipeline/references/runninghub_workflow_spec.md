@@ -2,7 +2,7 @@
 
 ## 1. 核心项目绑定信息
 * **官方平台**：[RunningHub (www.runninghub.cn)](https://www.runninghub.cn)
-* **专属项目网址**：[https://www.runninghub.cn/post/2100506281638457345/?inviteCode=rh-v1083](https://www.runninghub.cn/post/2100506281638457345/?inviteCode=rh-v1083)
+* **项目地址**：[https://www.runninghub.cn](https://www.runninghub.cn)
 * **项目名称**：`AI音乐MV数字人（ngualarith+Minimax H3 Selflift）新二采`
 * **工作流 ID (Workflow ID)**：`2100506281638457345`
 * **邀请码 / 渠道标识**：`rh-v1083`
@@ -27,24 +27,27 @@
 
 ---
 
-## 3. 核心节点映射与调用规范 (Node Info Mappings)
+## 3. 核心节点映射与调用规范 (Exact Node Mappings - 26 Nodes)
 
-在通过 RunningHub OpenAPI v2 发起任务时，需将 MV-AUTO-PIPELINE 各分镜参数映射至对应节点字段：
+在通过 RunningHub OpenAPI v2 发起任务时，调用该专属 ComfyUI 工作流配置文件，将各分镜参数映射至对应节点字段：
 
-| 节点用途 | 节点类型 (NodeType) | 推荐 NodeId | 字段名 (fieldName) | 取值规格与示例 |
+| 节点用途 | 节点类型 (NodeType) | 真实 NodeId | 字段名 (fieldName) | 取值规格与示例 |
 | :--- | :--- | :--- | :--- | :--- |
-| **主人公立绘** | `LoadImage` | `14` | `image` | 主人公参考图 URL 或上传的 `fileName` |
-| **歌词人声切片** | `LoadAudio` | `18` | `audio` | 按照本分镜 `[Start, End]` 裁切的独立音轨文件 |
-| **六段式正向词** | `Text Multiline` | `23` | `text` | 严格经关 5 机检放行的六段式提示词，含 `Singing vocals: "..."` 独立行 |
-| **负向抑制词** | `Text Multiline` | `27` | `text` | 非口型段强行抑制张嘴；口型段过滤模糊与破音伪影 |
-| **帧网格时长** | `TrimAudioDuration` | `32` | `duration` | 经 `duration_fitter.py` 向上网格对齐后的秒数 `ceil(TargetSeconds * FPS) / FPS` |
-| **采样器随机种子**| `SelfLiftAvatarH3Sampler`| `41` | `seed` | 镜头独立 Hash 种子，支持单镜头零依赖重抽卡 |
+| **音频输入** | `LoadAudio` | `34` | `audio` | 歌曲人声音频切片或全曲文件（默认 `43dfda9e...mp3`） |
+| **主人公立绘** | `LoadImage` | `36` | `image` | 主角人像与面部一致性参考图（默认 `e6423901...png`） |
+| **音频时长截断** | `TrimAudioDuration` | `85` | `duration` | 精确截断镜头持续秒数，经自研帧网格向上贴合 |
+| **音频起始偏移** | `TrimAudioDuration` | `85` | `start_index` | 音频窗口在全曲中的起始偏移秒数 |
+| **六段式正向词** | `Text Multiline` | `87` | `text` | 严格经关 5 机检放行的六段式提示词，直连 Node 42 `MiniMaxH3ReferenceToVideo` 的 `prompt` |
+| **采样器随机种子**| `SelfLiftAvatarH3Sampler`| `78` | `seed` | 镜头独立种子（默认 `999`），支持单镜头解耦重抽卡 |
+| **画幅分辨率** | `ResolutionSelector` | `61` | `aspect_ratio` | `9:16 (Portrait Widescreen)` / `16:9` |
+| **负向条件清零** | `ConditioningZeroOut` | `77` | `conditioning` | 承接 Node 42 并清零负向特征，送入 Node 78 采样器 |
+| **视频合并输出** | `VHS_VideoCombine` | `65` | `frame_rate` | 24fps 音画对齐封包（前缀 `selfliftAvatar`） |
 
 ---
 
 ## 4. RunningHub OpenAPI v2 通信协议标准
 
-RunningHub 现行官方标准采用 **OpenAPI v2**，通过 HTTP 请求头中的 `Authorization: Bearer <API_KEY>` 进行身份鉴权。
+RunningHub 官方标准采用 **OpenAPI v2**，通过 HTTP 请求头中的 `Authorization: Bearer <API_KEY>` 进行身份鉴权。
 
 ### 4.1 发起任务 (Run Workflow v2)
 * **Method**: `POST`
@@ -57,40 +60,46 @@ RunningHub 现行官方标准采用 **OpenAPI v2**，通过 HTTP 请求头中的
 {
   "nodeInfoList": [
     {
-      "nodeId": "14",
+      "nodeId": "36",
       "fieldName": "image",
-      "fieldValue": "https://rh-images.xiaoyaoyou.com/demo/protagonist.png"
+      "fieldValue": "e642390157ec77fa5195a81d97c8147b4d62533425dff3e299f0391aeae11022.png"
     },
     {
-      "nodeId": "18",
+      "nodeId": "34",
       "fieldName": "audio",
-      "fieldValue": "https://rh-images.xiaoyaoyou.com/audio/shot_02.wav"
+      "fieldValue": "43dfda9eb46c40192b014d04105c760c86cb959780b7aa1126375cb0a942e4de.mp3"
     },
     {
-      "nodeId": "23",
-      "fieldName": "text",
-      "fieldValue": "[SHOT] CU, 85mm portrait lens, f/1.8\n[SUBJECT] 22yo female singer\n[ACTION] Singing with emotional intensity\nSinging vocals: \"风吹过熟悉的街道\"\n[ENVIRONMENT] Neon-lit street\n[LIGHTING_COLOR] Cyan and warm amber lighting\n[CAMERA_TECH] Slow gentle push-in, 24fps"
-    },
-    {
-      "nodeId": "27",
-      "fieldName": "text",
-      "fieldValue": "blurry, low quality, artifacts, distorted mouth"
-    },
-    {
-      "nodeId": "32",
+      "nodeId": "85",
       "fieldName": "duration",
-      "fieldValue": 4.2083
+      "fieldValue": 4.5
     },
     {
-      "nodeId": "41",
+      "nodeId": "85",
+      "fieldName": "start_index",
+      "fieldValue": 0.0
+    },
+    {
+      "nodeId": "87",
+      "fieldName": "text",
+      "fieldValue": "[SHOT]\nShot scale: Close-Up...\nSinging vocals: \"夜色渐浓 街灯也渐渐熄灭\"..."
+    },
+    {
+      "nodeId": "78",
       "fieldName": "seed",
-      "fieldValue": 1083
+      "fieldValue": 999
     }
   ],
   "instanceType": "default",
   "usePersonalQueue": false
 }
 ```
+
+### 4.2 完整工作流配置模式 (Direct ComfyUI JSON Submission)
+除了 `nodeInfoList` 差异化传参外，亦可直接提交用户定制的完整 26 节点 ComfyUI 工作流 JSON 文件，参见：
+- 代码库模板：`src/data/runninghubWorkflowConfig.json`
+- 规则库规范：`skills/mv-auto-pipeline/references/runninghub_workflow.json`
+动态注入 Node 34、Node 36、Node 85、Node 87 与 Node 78 参数后即可直接调度。
 
 * **成功响应 (Response)**:
 ```json

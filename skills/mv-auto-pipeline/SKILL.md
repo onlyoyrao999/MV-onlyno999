@@ -72,8 +72,9 @@ description: >
 
 下面这些不是「建议」，是写死在流水线里的不可动摇条款（除非用户在提示中明示覆盖）：
 
-### 铁律 A：音乐是唯一的时间基准
+### 铁律 A：音乐是唯一的时间基准与伴奏贯穿保活
 * 段长、切点、口型位置全部从歌词时间轴推导，**绝对禁止先想好画面再去凑音乐位置**。
+* **全曲伴奏贯穿保活（非歌声段杜绝静音）**：前奏、间奏、Solo、尾奏及换气气口，母带伴奏乐器 100% 贯穿流淌。采用双轨分离架构：ComfyUI 仅注入人声干声驱动口型；后期拼接强制套用完整母带无损全曲音轨，**没有歌曲的地方绝不静音死寂**。
 * 歌词一行不能少（主歌、副歌、重复段、和声行、桥段全部在列）。
 * 间奏（Intro、Interlude、Solo、Outro）必须显式打标切出，它直接决定镜头节奏与呼吸感。
 
@@ -82,9 +83,14 @@ description: >
 * **中远景、全景、大远景、空镜、背影、群像一律严禁对口型**，由机器硬校验拦截。
 * **口型节奏克制**：全片口型段目标占比控制在 **40% ~ 50%**（基准 45%）。**连续对口型不得超过 3 段**，中间必须强制插入叙事镜头、空镜或氛围群像。
 
-### 铁律 C：唱歌不是说台词
+### 铁律 C：唱歌不是说台词与画面纯净铁律
 * 发声行必须走官方歌唱专用框架，**一句歌词独立成行**。绝不能写成「说某某话」或「念诵台词」，否则模型必驱动人物产生说话口型。
-* **不对口型的段落必须显式压制**：正文中一旦出现歌唱标记，模型极易产生跟随动作。因此不对口型段必须强制注入正向声明：`"mouth naturally closed, lips completely still, not moving along with vocals"`，并在负面提示词中注入：`"singing, mouth open, lip-sync, talking, speaking, vocalizing"`。
+* **不对口型的段落必须显式压制**：正文中一旦出现歌唱标记，模型极易产生跟随动作。因此不对口型段必须强制注入正向声明：`"mouth naturally closed, lips completely still, not moving along with vocals"`。
+* **画面纯净铁律（严禁出现任何文字）**：
+  * **正向严禁索要文字**：Prompt 中严禁要求画面渲染文字、歌词或字幕（`no text on screen`）。
+  * **负向强制防文字压制**：所有镜头（无论是否对口型）的 Negative Prompt **必须强制注入**：
+    `text, words, subtitles, lyrics, captions, watermark, logo, typography, letters, signature, username, font, burned-in text`。
+  * 杜绝 AI 画面浮现扭曲的乱码字或假水印；成片字幕统一由后期 SRT 挂载。
 * 语言严格分层：**字段名、技术参数与视觉标签用英文；艺术叙述、人物情感与原歌词用中文**。
 
 ### 铁律 D：工作流与生成：不猜、不烧冤枉钱
@@ -255,7 +261,7 @@ description: >
 
 本 Skill 绑定的官方云端 ComfyUI 生成项目为：
 * **平台**：[RunningHub (www.runninghub.cn)](https://www.runninghub.cn)
-* **专属项目网址**：[https://www.runninghub.cn/post/2100506281638457345/?inviteCode=rh-v1083](https://www.runninghub.cn/post/2100506281638457345/?inviteCode=rh-v1083)
+* **项目地址**：[https://www.runninghub.cn](https://www.runninghub.cn)
 * **项目名称**：`AI音乐MV数字人（ngualarith+Minimax H3 Selflift）新二采`
 * **工作流 ID (Workflow ID)**：`2100506281638457345`
 * **邀请码**：`rh-v1083`

@@ -73,11 +73,11 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             <a
-              href="https://www.runninghub.cn/post/2100506281638457345/?inviteCode=rh-v1083"
+              href="https://www.runninghub.cn"
               target="_blank"
               rel="noopener noreferrer"
               className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-500/30 transition-all"
-              title="打开 RunningHub 专属 ComfyUI 工作流 (2100506281638457345)"
+              title="打开 RunningHub 平台 (www.runninghub.cn)"
             >
               <Cpu className="w-3.5 h-3.5 text-cyan-400" />
               <span>RunningHub 工作流</span>
