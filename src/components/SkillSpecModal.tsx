@@ -8,6 +8,35 @@ interface SkillSpecModalProps {
 
 const SPEC_FILES = [
   {
+    id: 'readme_md',
+    name: 'README.md',
+    type: 'markdown',
+    path: '/README.md',
+    content: `# MV-AUTO-PIPELINE (V1.0.6) · 音乐 MV 全自动生成 SOP
+
+> 核心承诺：一首歌 + 一张主人公图，交付一支音画严格对齐、口型精准匹配的高品质音乐 MV。
+> 底层算力：官方无缝集成 RunningHub (www.runninghub.cn) ComfyUI 云端工作流「AI音乐MV数字人（ngualarith+Minimax H3 Selflift）新二采」。
+
+## 🔗 RunningHub 云端工作流项目绑定
+* 官方平台：RunningHub (www.runninghub.cn)
+* 专属项目网址：https://www.runninghub.cn/post/2100506281638457345/?inviteCode=rh-v1083
+* 项目名称：AI音乐MV数字人（ngualarith+Minimax H3 Selflift）新二采
+* 工作流 ID (Workflow ID)：2100506281638457345
+* 邀请码 / 渠道标：rh-v1083
+
+## ⚡ 六大不可动摇铁律
+* 铁律 A：音乐是唯一的时间基准（歌词一行不能少，切点只落在歌词句尾）
+* 铁律 B：只有中近景才对口型（ECU/CU/MCU/MS 开口，远景全景硬闭嘴，黄金占比 45%，连续 <=3 段）
+* 铁律 C：唱歌不是说台词（独立行 Singing vocals: "..."，非口型正负双向压制）
+* 铁律 D：不猜字段、不烧冤枉钱（先体检工作流，去参考化，指纹缓存，双池真钱封顶）
+* 铁律 E：八道关 + 对齐三验（机检硬门禁 + HTML审查，滞后量 <=80ms，相关度 >=0.78，能量 >= -36dBFS）
+* 铁律 F：会自己长本事（复盘三问，代码、文档、自检清单三位一体同步发版）
+
+## 📐 两大自研专有算法
+* 机制一：视频帧网格时长向上贴合算法（FPS Grid Fitting & PTS Cut，消除 25 镜累积 6 秒漂移）
+* 机制二：音频包络局部搜索对齐三验（Local Search Normalized Cross-Correlation，滞后量/互相关/能量硬验）`
+  },
+  {
     id: 'skill_md',
     name: 'SKILL.md',
     type: 'markdown',
