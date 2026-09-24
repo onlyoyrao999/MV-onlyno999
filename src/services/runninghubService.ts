@@ -230,6 +230,11 @@ export async function executeRunningHubDispatch(
       prompt: string;
       negativePrompt: string;
       seed?: number;
+      useUploadedBackground?: boolean;
+      backgroundImageUrl?: string;
+      backgroundImageName?: string;
+      generatedKeyframeUrl?: string;
+      imageGenPlugin?: string;
     };
     onProgressUpdate?: (update: Partial<RunningHubTaskDispatchResult>) => void;
   }
@@ -250,6 +255,15 @@ export async function executeRunningHubDispatch(
   addLog(`Target Endpoint: POST /openapi/v2/run/workflow/${RUNNINGHUB_CONFIG.workflowId}`);
   addLog(`Auth Mode: Bearer Token ${apiKey ? '•'.repeat(8) : '(Sandbox / Offline)'}`);
 
+  // Effective Image selection (supporting ImageGen buddy-multimodal-generation img2img)
+  const effectiveImageUrl = (shot.useUploadedBackground && (shot.generatedKeyframeUrl || shot.backgroundImageUrl))
+    ? (shot.generatedKeyframeUrl || shot.backgroundImageUrl)
+    : 'e642390157ec77fa5195a81d97c8147b4d62533425dff3e299f0391aeae11022.png';
+
+  if (shot.useUploadedBackground) {
+    addLog(`[buddy-multimodal-generation] Injected custom ImageGen img2img keyframe for Node 36 LoadImage! (${shot.backgroundImageName || 'custom_bg'})`);
+  }
+
   // Duration fitting calculation
   const targetDuration = shot.end - shot.start;
   const fps = 24;
@@ -259,7 +273,7 @@ export async function executeRunningHubDispatch(
 
   const v2Payload = buildRunningHubV2Payload({
     shotId: shot.id,
-    imageUrl: 'e642390157ec77fa5195a81d97c8147b4d62533425dff3e299f0391aeae11022.png',
+    imageUrl: effectiveImageUrl,
     audioUrl: '43dfda9eb46c40192b014d04105c760c86cb959780b7aa1126375cb0a942e4de.mp3',
     prompt: shot.prompt,
     negativePrompt: shot.negativePrompt,

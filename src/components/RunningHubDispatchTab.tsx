@@ -48,6 +48,10 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
 
   const selectedShot = storyboard.find(s => s.id === selectedShotId) || storyboard[0];
 
+  const effectiveImageUrl = selectedShot?.useUploadedBackground && (selectedShot.generatedKeyframeUrl || selectedShot.backgroundImageUrl)
+    ? (selectedShot.generatedKeyframeUrl || selectedShot.backgroundImageUrl)
+    : 'e642390157ec77fa5195a81d97c8147b4d62533425dff3e299f0391aeae11022.png';
+
   const handleCopyWorkflowId = () => {
     navigator.clipboard.writeText(RUNNINGHUB_CONFIG.workflowId);
     setCopiedWfId(true);
@@ -57,7 +61,7 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
   const currentPayload = selectedShot
     ? buildRunningHubPayload({
         shotId: selectedShot.id,
-        imageUrl: 'e642390157ec77fa5195a81d97c8147b4d62533425dff3e299f0391aeae11022.png',
+        imageUrl: effectiveImageUrl,
         audioUrl: '43dfda9eb46c40192b014d04105c760c86cb959780b7aa1126375cb0a942e4de.mp3',
         prompt: selectedShot.prompt,
         negativePrompt: selectedShot.negativePrompt,
@@ -69,7 +73,7 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
 
   const customWorkflowJson = selectedShot
     ? buildCustomComfyWorkflowJson({
-        imageUrl: 'e642390157ec77fa5195a81d97c8147b4d62533425dff3e299f0391aeae11022.png',
+        imageUrl: effectiveImageUrl,
         audioUrl: '43dfda9eb46c40192b014d04105c760c86cb959780b7aa1126375cb0a942e4de.mp3',
         prompt: selectedShot.prompt,
         durationSeconds: selectedShot.duration,
@@ -443,15 +447,41 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
             {viewMode === 'nodes' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Node 36 */}
-                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
+                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1.5">
                   <div className="flex items-center justify-between text-xs font-mono">
                     <span className="font-bold text-cyan-400">Node 36: LoadImage</span>
                     <span className="text-[10px] text-slate-500">字段: image</span>
                   </div>
-                  <div className="text-xs text-slate-200 truncate font-mono">
-                    e642390157ec77fa5195a81d97c8147b4d62533425dff3e299f0391aeae11022.png
+                  {selectedShot.useUploadedBackground && (selectedShot.generatedKeyframeUrl || selectedShot.backgroundImageUrl) ? (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 bg-slate-900/80 p-1.5 rounded-lg border border-cyan-500/30">
+                        <img
+                          src={selectedShot.generatedKeyframeUrl || selectedShot.backgroundImageUrl}
+                          alt="Node 36 Keyframe"
+                          className="w-9 h-12 object-cover rounded border border-cyan-400/40"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[11px] font-bold text-cyan-300 truncate">
+                            {selectedShot.backgroundImageName || '上传背景图 (已融合关键帧)'}
+                          </div>
+                          <div className="text-[9px] text-indigo-300 font-mono flex items-center gap-1">
+                            <Sparkles className="w-2.5 h-2.5 text-indigo-400" />
+                            <span>buddy-multimodal-generation</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-slate-200 truncate font-mono">
+                      e642390157ec77fa5195a81d97c8147b4d62533425dff3e299f0391aeae11022.png
+                    </div>
+                  )}
+                  <div className="text-[10px] text-slate-400">
+                    {selectedShot.useUploadedBackground
+                      ? '已直通绑定 ImageGen 图生图合成关键帧，直连 Node 42 ref_image_0'
+                      : '主人公基准立绘，直连 Node 42 ref_image_0'}
                   </div>
-                  <div className="text-[10px] text-slate-400">主人公基准立绘，直连 Node 42 ref_image_0</div>
                 </div>
 
                 {/* Node 34 */}

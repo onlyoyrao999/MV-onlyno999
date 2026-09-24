@@ -28,6 +28,13 @@ export interface StoryboardShot {
   lagMs?: number;
   correlation?: number;
   vocalDbfs?: number;
+  useUploadedBackground?: boolean;
+  backgroundImageUrl?: string;
+  backgroundImageName?: string;
+  generatedKeyframeUrl?: string;
+  imageGenStatus?: 'idle' | 'generating' | 'completed' | 'failed';
+  imageGenPlugin?: 'buddy-multimodal-generation';
+  imageGenLogs?: string[];
 }
 
 export interface GateDefinition {
@@ -242,6 +249,11 @@ Photorealistic, cinematic Kodak Vision3 color profile, shallow depth of field, n
     pool: "spot_free",
     costUsd: 0.0,
     status: "completed",
+    useUploadedBackground: true,
+    backgroundImageName: "rainy_neon_street.png",
+    backgroundImageUrl: "data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"360\" height=\"640\" viewBox=\"0 0 360 640\"><defs><linearGradient id=\"bg\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"%23090d16\"/><stop offset=\"50%\" stop-color=\"%230f172a\"/><stop offset=\"100%\" stop-color=\"%23020617\"/></linearGradient><linearGradient id=\"neonCyan\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"%2306b6d4\" stop-opacity=\"0.8\"/><stop offset=\"100%\" stop-color=\"%230891b2\" stop-opacity=\"0.1\"/></linearGradient><linearGradient id=\"neonAmber\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"%23f59e0b\" stop-opacity=\"0.8\"/><stop offset=\"100%\" stop-color=\"%23d97706\" stop-opacity=\"0.1\"/></linearGradient></defs><rect width=\"360\" height=\"640\" fill=\"url(%23bg)\"/><path d=\"M0 380 L180 320 L360 380 L360 640 L0 640 Z\" fill=\"%23020617\"/><rect x=\"20\" y=\"160\" width=\"30\" height=\"180\" fill=\"url(%23neonCyan)\" rx=\"4\"/><rect x=\"310\" y=\"140\" width=\"30\" height=\"200\" fill=\"url(%23neonAmber)\" rx=\"4\"/><line x1=\"0\" y1=\"460\" x2=\"360\" y2=\"460\" stroke=\"%2338bdf8\" stroke-opacity=\"0.3\" stroke-width=\"2\"/></svg>",
+    imageGenStatus: "completed",
+    imageGenPlugin: "buddy-multimodal-generation",
     lagMs: 24.5,
     correlation: 0.88,
     vocalDbfs: -21.4

@@ -51,7 +51,8 @@ skills/mv-auto-pipeline/
 | 画幅比例 | `ResolutionSelector` | **61** | `aspect_ratio` | 9:16 (Portrait Widescreen) 或 16:9 |
 | 视频封包 | `VHS_VideoCombine` | **65** | `frame_rate` | 24fps 音画封装，前缀 `selfliftAvatar` |
 
-## 双重交付保障
+## 三重交付与集成保障
 
 1. **全程有声（杜绝静音死寂）**：全片采用双轨音频架构（Track A 伴奏母带底轨 + Track B 人声干声对齐轨），前奏/间奏/尾奏伴奏不间断，剪辑成片强制重贴全曲母带底轨。
 2. **纯净画面（杜绝文字字幕）**：负向提示词硬性注入字幕与文字屏蔽项（`text, words, subtitles, lyrics, watermark...`），正向提示词剔除排版指令并通过关 5 / 关 6 自动化机检。
+3. **背景图直通图生图（内置 ImageGen / buddy-multimodal-generation）**：当用户要求直接使用上传的背景图作为背景时，流水线调用平台内置 **ImageGen**（多模态生成能力，由 **`buddy-multimodal-generation`** 内置插件路由）执行 **图生图 / image-to-image**，锁死背景建筑透视，融合人物光影，直连 RunningHub ComfyUI 工作流 **Node 36 (`LoadImage.image`)**。

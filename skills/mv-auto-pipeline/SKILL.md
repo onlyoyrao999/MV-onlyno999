@@ -91,6 +91,12 @@ description: >
   * **负向强制防文字压制**：所有镜头（无论是否对口型）的 Negative Prompt **必须强制注入**：
     `text, words, subtitles, lyrics, captions, watermark, logo, typography, letters, signature, username, font, burned-in text`。
   * 杜绝 AI 画面浮现扭曲的乱码字或假水印；成片字幕统一由后期 SRT 挂载。
+* **背景图与内置 ImageGen（buddy-multimodal-generation）图生图规则**：
+  * **核心触发指令**：当用户要求「**直接使用上传的背景图作为背景**」时，流水线立即调用平台内置 **ImageGen**（多模态生成能力，由 **`buddy-multimodal-generation`** 内置插件路由）执行 **图生图 / image-to-image**。
+  * **视觉锁死机制**：以用户上传的背景图为底层结构锚点，绝对保留其建筑轮廓、透视几何与光暗层次；
+  * **多模态人物与光影融汇**：结合分镜角色与景别（大特写/特写/近景/中景），将主角与背景环境光（漫反射、边缘光、景深暗角）进行高保真多模态融合；
+  * **直通 RunningHub 节点**：生成的图生图关键帧无缝直连 RunningHub ComfyUI 工作流 **Node 36 (`LoadImage.image`)**，直接取代默认参考图作为视频生成基准；
+  * **纯净保障**：图生图流程严格执行 0 文字/0 水印压制，不得在合成画面中带入任何字体或标识。
 * 语言严格分层：**字段名、技术参数与视觉标签用英文；艺术叙述、人物情感与原歌词用中文**。
 
 ### 铁律 D：工作流与生成：不猜、不烧冤枉钱
