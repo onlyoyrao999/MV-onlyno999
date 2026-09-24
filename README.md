@@ -134,6 +134,7 @@ python3 ./skills/mv-auto-pipeline/scripts/gate6_checker.py
 2. **歌词时间轴 (Lyric Timeline - Gate 1)**：原曲母带音频波形走带、音画切点标记与呼吸口检测；
 3. **分镜设计与硬门禁 (Storyboard Studio - Gate 4/5/6)**：
    - 景别四分律（仅中近景开口）；
+   - **背景图直通图生图**：当用户要求直接使用上传背景图时，调用平台内置 **ImageGen**（由 **`buddy-multimodal-generation`** 插件路由）执行 **图生图 / image-to-image**，保真度 $\ge 96.8\%$，直连 RunningHub Node 36；
    - **关 6 实时计算**：首尾闭环无断层、连续口型段数、黄金占比监控；
    - **关 5 11 项提示词机检面板**：11 颗机检灯实时断言，支持一键规范重构；
    - **一键直通**：单镜一键派发至 RunningHub 渲染。
@@ -141,7 +142,7 @@ python3 ./skills/mv-auto-pipeline/scripts/gate6_checker.py
    - 直通 [RunningHub 平台 (www.runninghub.cn)](https://www.runninghub.cn)；
    - 沙箱体验模式与云端 Live API 双模运行；
    - **三种视图模式**：
-     1. **节点图谱**：直观展示 26 个 ComfyUI 真实节点与核心入参；
+     1. **节点图谱**：直观展示 26 个 ComfyUI 真实节点与核心入参（Node 36 支持动态承载 ImageGen 合成关键帧）；
      2. **完整工作流 JSON**：动态注入当前分镜参数的真实 ComfyUI JSON，支持一键复制与下载 `.json`；
      3. **OpenAPI v2 Payload**：标准 Bearer Token 格式的差异化调度请求体；
    - 实时任务日志终端与 Gate 8 对齐三验判定。
@@ -168,6 +169,9 @@ npm run build
 
 ---
 
-## 📄 授权与贡献规范
+## 📄 授权与同步维护铁律 (Maintenance Directive)
 
-遵循 AI Studio Skill 规范与 SOP 铁律 F：每次修改必须保持**代码 (Code)、规范文档 (Docs)、机检清单 (Checklist)** 三位一体同步发版。
+* **README 同步更新铁律（硬性准则）**：  
+  后续无论进行任何功能增删、接口变动、ComfyUI 拓扑调整或规则演进，**必须无条件同步修正根目录 `/README.md` 与 Skill 专用目录 `/skills/mv-auto-pipeline/README.md`**。
+* **三位一体交付原则（铁律 F）**：  
+  必须时刻保持 **工程代码 (Code)**、**规范文档 (Docs & READMEs)**、**自动化机检清单 (Checklist & Scripts)** 三位一体完全一致，杜绝任何文档滞后。

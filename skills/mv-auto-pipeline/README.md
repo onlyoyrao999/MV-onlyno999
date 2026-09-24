@@ -56,3 +56,11 @@ skills/mv-auto-pipeline/
 1. **全程有声（杜绝静音死寂）**：全片采用双轨音频架构（Track A 伴奏母带底轨 + Track B 人声干声对齐轨），前奏/间奏/尾奏伴奏不间断，剪辑成片强制重贴全曲母带底轨。
 2. **纯净画面（杜绝文字字幕）**：负向提示词硬性注入字幕与文字屏蔽项（`text, words, subtitles, lyrics, watermark...`），正向提示词剔除排版指令并通过关 5 / 关 6 自动化机检。
 3. **背景图直通图生图（内置 ImageGen / buddy-multimodal-generation）**：当用户要求直接使用上传的背景图作为背景时，流水线调用平台内置 **ImageGen**（多模态生成能力，由 **`buddy-multimodal-generation`** 内置插件路由）执行 **图生图 / image-to-image**，锁死背景建筑透视，融合人物光影，直连 RunningHub ComfyUI 工作流 **Node 36 (`LoadImage.image`)**。
+
+---
+
+## 📄 README 实时同步更正指令 (Sync Directive)
+
+* **最高纪律**：无论后续工程代码进行了任何新增功能（如多模态、新 API 或新模型）、参数字段变更、工作流配置增减或算法调优，**必须始终无条件同步更正根目录 `/README.md` 与本目录 `skills/mv-auto-pipeline/README.md`**。
+* **三位一体验证**：严格贯彻 SOP 铁律 F，确保 **代码 (Code)**、**文档 (READMEs & SKILL.md)**、**机检清单 (Checklists)** 实时咬合一致，禁止单侧更新。
+
