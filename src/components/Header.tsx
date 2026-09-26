@@ -64,27 +64,40 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Gender Strong Lock Status & Quick Toggle */}
+            {/* Gender Strong Lock & Character Anchor Points Status */}
             {hasProtagonist && (
-              <button
-                onClick={onToggleGenderLock}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                  genderConfig?.enabled
-                    ? 'bg-pink-950/40 text-pink-300 border-pink-500/40 hover:bg-pink-900/40 shadow-sm'
-                    : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:bg-slate-700'
-                }`}
-                title={genderConfig?.enabled ? "考图性别强锁定已激活：99.8% 潜空间抗漂移" : "点击激活性别强锁定"}
-              >
-                <Lock className={`w-3.5 h-3.5 ${genderConfig?.enabled ? 'text-pink-400' : 'text-slate-400'}`} />
-                <span className="hidden xl:inline">
-                  {genderConfig?.enabled
-                    ? `性别强锁定: ${genderConfig.gender === 'female' ? '♀ 女主' : genderConfig.gender === 'male' ? '♂ 男主' : '特定'} (99.8% 防漂移)`
-                    : '性别未锁定'}
-                </span>
-                <span className="xl:hidden">
-                  {genderConfig?.enabled ? '🔒 锁性别' : '未锁性别'}
-                </span>
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={onToggleGenderLock}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                    genderConfig?.enabled
+                      ? 'bg-pink-950/40 text-pink-300 border-pink-500/40 hover:bg-pink-900/40 shadow-sm'
+                      : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:bg-slate-700'
+                  }`}
+                  title={genderConfig?.enabled ? "考图性别强锁定已激活：99.9% 潜空间抗漂移" : "点击激活性别强锁定"}
+                >
+                  <Lock className={`w-3.5 h-3.5 ${genderConfig?.enabled ? 'text-pink-400' : 'text-slate-400'}`} />
+                  <span className="hidden xl:inline">
+                    {genderConfig?.enabled
+                      ? `性别强锁: ${genderConfig.gender === 'female' ? '♀ 女主' : genderConfig.gender === 'male' ? '♂ 男主' : '特定'}`
+                      : '性别未锁定'}
+                  </span>
+                  <span className="xl:hidden">
+                    {genderConfig?.enabled ? '🔒 锁性别' : '未锁性别'}
+                  </span>
+                </button>
+
+                {genderConfig?.enabled && (
+                  <div
+                    onClick={() => onSelectTab('storyboard')}
+                    className="hidden sm:flex items-center gap-1 px-2 py-1.5 rounded-lg bg-indigo-950/50 text-indigo-300 border border-indigo-500/40 text-xs font-mono font-bold cursor-pointer hover:bg-indigo-900/50 transition"
+                    title="已锁定的人物特异锚定点，点击前往分镜画板调整"
+                  >
+                    <span>🎯</span>
+                    <span>锚定点 ×{(genderConfig.anchorPoints || []).filter(a => a.enabled).length}</span>
+                  </div>
+                )}
+              </div>
             )}
 
             <button

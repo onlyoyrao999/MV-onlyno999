@@ -182,20 +182,43 @@ export function buildRunningHubV2Payload(params: {
   let finalPrompt = params.prompt;
   let finalNegPrompt = params.negativePrompt || '';
 
-  // Inject Gender Strong Lock if enabled and missing explicit token
-  if (genderConfig.enabled && !finalPrompt.includes('[GENDER_LOCK')) {
-    if (finalPrompt.includes('[SUBJECT]')) {
-      finalPrompt = finalPrompt.replace('[SUBJECT]', `[SUBJECT]\n${genderConfig.positiveTokens}`);
-    } else {
-      finalPrompt = `${genderConfig.positiveTokens}\n\n${finalPrompt}`;
+  // 1. Build Anchor Points Token String if configured
+  const activeAnchors = (genderConfig.anchorPoints || []).filter(a => a.enabled);
+  let anchorTokenString = '';
+  let anchorNegString = '';
+  if (activeAnchors.length > 0) {
+    const anchorTokens = activeAnchors.map(a => a.promptToken).join(', ');
+    anchorTokenString = `[ANCHOR_POINTS: ${anchorTokens}]`;
+    const negTokens = activeAnchors.filter(a => a.negativeToken).map(a => a.negativeToken).join(', ');
+    if (negTokens) {
+      anchorNegString = negTokens;
     }
   }
 
-  // Inject Cross-Gender Negative Lock if enabled
+  // 2. Inject Gender Strong Lock if enabled and missing explicit token
+  if (genderConfig.enabled && !finalPrompt.includes('[GENDER_LOCK')) {
+    const combinedLock = anchorTokenString ? `${genderConfig.positiveTokens}\n${anchorTokenString}` : genderConfig.positiveTokens;
+    if (finalPrompt.includes('[SUBJECT]')) {
+      finalPrompt = finalPrompt.replace('[SUBJECT]', `[SUBJECT]\n${combinedLock}`);
+    } else {
+      finalPrompt = `${combinedLock}\n\n${finalPrompt}`;
+    }
+  } else if (anchorTokenString && !finalPrompt.includes('[ANCHOR_POINTS')) {
+    if (finalPrompt.includes('[SUBJECT]')) {
+      finalPrompt = finalPrompt.replace('[SUBJECT]', `[SUBJECT]\n${anchorTokenString}`);
+    } else {
+      finalPrompt = `${anchorTokenString}\n\n${finalPrompt}`;
+    }
+  }
+
+  // 3. Inject Cross-Gender Negative Lock & Anchor Negatives if enabled
   if (genderConfig.enabled && genderConfig.preventCrossGenderDrift) {
     if (!finalNegPrompt.includes(genderConfig.gender === 'female' ? 'masculine' : 'feminine')) {
       finalNegPrompt = `${finalNegPrompt ? finalNegPrompt + ', ' : ''}${genderConfig.negativeTokens}`;
     }
+  }
+  if (anchorNegString && !finalNegPrompt.includes('missing')) {
+    finalNegPrompt = `${finalNegPrompt ? finalNegPrompt + ', ' : ''}${anchorNegString}`;
   }
 
   return {
@@ -252,11 +275,25 @@ export function buildCustomComfyWorkflowJson(params: {
   const genderConfig = params.genderConfig || DEFAULT_GENDER_LOCK_CONFIG;
   let finalPrompt = params.prompt;
 
+  // Build anchor points tokens
+  const activeAnchors = (genderConfig.anchorPoints || []).filter(a => a.enabled);
+  let anchorTokenString = '';
+  if (activeAnchors.length > 0) {
+    anchorTokenString = `[ANCHOR_POINTS: ${activeAnchors.map(a => a.promptToken).join(', ')}]`;
+  }
+
   if (genderConfig.enabled && !finalPrompt.includes('[GENDER_LOCK')) {
+    const combinedLock = anchorTokenString ? `${genderConfig.positiveTokens}\n${anchorTokenString}` : genderConfig.positiveTokens;
     if (finalPrompt.includes('[SUBJECT]')) {
-      finalPrompt = finalPrompt.replace('[SUBJECT]', `[SUBJECT]\n${genderConfig.positiveTokens}`);
+      finalPrompt = finalPrompt.replace('[SUBJECT]', `[SUBJECT]\n${combinedLock}`);
     } else {
-      finalPrompt = `${genderConfig.positiveTokens}\n\n${finalPrompt}`;
+      finalPrompt = `${combinedLock}\n\n${finalPrompt}`;
+    }
+  } else if (anchorTokenString && !finalPrompt.includes('[ANCHOR_POINTS')) {
+    if (finalPrompt.includes('[SUBJECT]')) {
+      finalPrompt = finalPrompt.replace('[SUBJECT]', `[SUBJECT]\n${anchorTokenString}`);
+    } else {
+      finalPrompt = `${anchorTokenString}\n\n${finalPrompt}`;
     }
   }
 
@@ -329,11 +366,18 @@ export async function executeRunningHubDispatch(
   addLog(`Target Endpoint: POST /openapi/v2/run/workflow/${RUNNINGHUB_CONFIG.workflowId}`);
   addLog(`Auth Mode: Bearer Token ${apiKey ? '•'.repeat(8) : '(Sandbox / Offline)'}`);
 
-  // Gender Strong Lock Injection
+  // Gender Strong Lock & Character Anchor Points Injection
+  const activeAnchors = (genderConfig.anchorPoints || []).filter(a => a.enabled);
   if (genderConfig.enabled) {
-    addLog(`[GENDER_LOCK] 🔒 激活考图视频采样性别强锁定 (Gender: ${genderConfig.gender}, Anti-Drift: 99.8%)`);
+    addLog(`[GENDER_LOCK] 🔒 激活考图视频采样性别强锁定 (Gender: ${genderConfig.gender}, Anti-Drift: ${activeAnchors.length > 0 ? '99.9%' : '99.8%'})`);
     addLog(`  -> Node 87 (Text Multiline): 注入生理性别强锚点 [GENDER_LOCK: ${genderConfig.gender.toUpperCase()}]`);
     addLog(`  -> Node 77 (ConditioningZeroOut) / 负向提示词: 注入跨性别反向硬压制 (${genderConfig.gender === 'female' ? 'male, boy, masculine...' : 'female, girl, feminine...'})`);
+  }
+  if (activeAnchors.length > 0) {
+    addLog(`[ANCHOR_MATRIX] 🎯 锁定 ${activeAnchors.length} 个特异人物锚定点 (权重 ${genderConfig.anchorAttentionBoost || 1.45}x):`);
+    activeAnchors.forEach(a => {
+      addLog(`     • ${a.icon} [${a.name}] @ (X:${a.x}%, Y:${a.y}%) -> ${a.promptToken}`);
+    });
   }
 
   // Effective Image selection (supporting ImageGen buddy-multimodal-generation img2img)

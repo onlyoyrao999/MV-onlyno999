@@ -10,6 +10,200 @@ export interface LyricLine {
 
 export type GenderLockMode = 'female' | 'male' | 'unisex' | 'none';
 
+export type AnchorCategory = 'facial_mark' | 'hair_accent' | 'jewelry_accessory' | 'costume_detail' | 'body_art';
+
+export interface CharacterAnchorPoint {
+  id: string;
+  name: string;
+  category: AnchorCategory;
+  description: string;
+  promptToken: string; // e.g. "(distinctive teardrop mole directly below left eye:1.45)"
+  negativeToken?: string; // e.g. "missing teardrop mole, clean face without mole"
+  x: number; // percentage 0-100 on reference image canvas
+  y: number; // percentage 0-100 on reference image canvas
+  weight: number; // e.g. 1.45 (1.0 to 2.0)
+  enabled: boolean;
+  color: string;
+  icon: string;
+}
+
+export interface AnchorPackPreset {
+  id: string;
+  name: string;
+  gender: GenderLockMode;
+  tagline: string;
+  anchors: CharacterAnchorPoint[];
+}
+
+export const ANCHOR_PACK_PRESETS: AnchorPackPreset[] = [
+  {
+    id: 'pack_female_iconic',
+    name: '高辨识度女主套包 (Iconic Female Pack)',
+    gender: 'female',
+    tagline: '左眼泪痣 + 祖母绿锁骨链 + 白金挑染龙须 + 单边珍珠耳夹，全片一眼即认',
+    anchors: [
+      {
+        id: 'anc_fem_01',
+        name: '左眼角微型泪痣',
+        category: 'facial_mark',
+        description: '左眼正下方2mm处微小深褐泪痣，特写与近景极高辨识度',
+        promptToken: '(distinctive teardrop beauty mark mole directly below left eye:1.45)',
+        negativeToken: 'missing teardrop mole, clean face without left eye mole, spotless skin without beauty mark',
+        x: 42,
+        y: 45,
+        weight: 1.45,
+        enabled: true,
+        color: '#ec4899',
+        icon: '💧'
+      },
+      {
+        id: 'anc_fem_02',
+        name: '祖母绿细晶锁骨链',
+        category: 'jewelry_accessory',
+        description: '锁骨正中央极细白金链坠单颗水滴祖母绿宝石',
+        promptToken: '(signature delicate emerald gemstone teardrop choker necklace at collarbone:1.40)',
+        negativeToken: 'missing emerald necklace, bare collarbone without necklace, incorrect jewelry',
+        x: 50,
+        y: 78,
+        weight: 1.40,
+        enabled: true,
+        color: '#10b981',
+        icon: '💎'
+      },
+      {
+        id: 'anc_fem_03',
+        name: '前额白金挑染龙须碎发',
+        category: 'hair_accent',
+        description: '左额前垂落的一缕极细白金挑染发丝，微风中轻微飘动',
+        promptToken: '(single thin platinum silver highlight streak strand framing the face:1.35)',
+        negativeToken: 'monochrome plain black hair, missing silver hair highlight strand',
+        x: 36,
+        y: 32,
+        weight: 1.35,
+        enabled: true,
+        color: '#06b6d4',
+        icon: '✨'
+      },
+      {
+        id: 'anc_fem_04',
+        name: '单边异形珍珠耳骨夹',
+        category: 'jewelry_accessory',
+        description: '左耳垂佩戴的不对称巴洛克珍珠银质耳骨夹',
+        promptToken: '(asymmetrical silver baroque pearl ear cuff earring on left ear:1.30)',
+        negativeToken: 'missing left earring, symmetrical standard earrings',
+        x: 28,
+        y: 47,
+        weight: 1.30,
+        enabled: true,
+        color: '#a855f7',
+        icon: '🦻'
+      }
+    ]
+  },
+  {
+    id: 'pack_male_identity',
+    name: '冷峻男主套包 (Male Sharp Identity Pack)',
+    gender: 'male',
+    tagline: '右眉断痕 + 银质机械蛇骨手镯 + 下颌角微痣 + 哑光黑耳钉',
+    anchors: [
+      {
+        id: 'anc_male_01',
+        name: '右眉峰细微断痕/刀疤',
+        category: 'facial_mark',
+        description: '右侧眉弓外侧1/3处极其细微的利落断眉缺口',
+        promptToken: '(subtle sharp razor slit gap scar in right eyebrow:1.45)',
+        negativeToken: 'smooth ordinary full eyebrow, missing eyebrow slit',
+        x: 62,
+        y: 36,
+        weight: 1.45,
+        enabled: true,
+        color: '#3b82f6',
+        icon: '⚡'
+      },
+      {
+        id: 'anc_male_02',
+        name: '左侧下颌角分明微痣',
+        category: 'facial_mark',
+        description: '左侧硬朗下颌线条转角处的独立小痣',
+        promptToken: '(distinct tiny dark mole on sharp left jawline angle:1.35)',
+        negativeToken: 'missing jawline mole, rounded jaw',
+        x: 32,
+        y: 60,
+        weight: 1.35,
+        enabled: true,
+        color: '#f59e0b',
+        icon: '🔹'
+      },
+      {
+        id: 'anc_male_03',
+        name: '左耳单颗哑光黑钛耳钉',
+        category: 'jewelry_accessory',
+        description: '左耳垂处低调的八角形哑光黑色钛金属耳钉',
+        promptToken: '(single minimalist matte black titanium geometric stud earring on left earlobe:1.35)',
+        negativeToken: 'missing black earring, shiny gold jewelry',
+        x: 24,
+        y: 48,
+        weight: 1.35,
+        enabled: true,
+        color: '#64748b',
+        icon: '▪️'
+      },
+      {
+        id: 'anc_male_04',
+        name: '左腕银质机械蛇骨手镯',
+        category: 'jewelry_accessory',
+        description: '左手手腕佩戴的雕花纯银重工蛇骨机械手镯',
+        promptToken: '(heavy textured sterling silver snake-chain industrial bangle bracelet on wrist:1.30)',
+        negativeToken: 'bare wrist without bracelet',
+        x: 20,
+        y: 85,
+        weight: 1.30,
+        enabled: true,
+        color: '#06b6d4',
+        icon: '⛓️'
+      }
+    ]
+  },
+  {
+    id: 'pack_cyber_scifi',
+    name: '赛博霓虹套包 (Cyberpunk Sci-Fi Pack)',
+    gender: 'unisex',
+    tagline: '太阳穴青色发光神经接口 + 颈部全息条码刺青 + 机械发卡',
+    anchors: [
+      {
+        id: 'anc_cyb_01',
+        name: '太阳穴微型发光神经接口',
+        category: 'body_art',
+        description: '右侧太阳穴边缘发光的青色纳米神经芯片插槽接口',
+        promptToken: '(subtle glowing cyan neural interface port implant at right temple:1.50)',
+        negativeToken: 'missing neural port, plain skin temple',
+        x: 68,
+        y: 40,
+        weight: 1.50,
+        enabled: true,
+        color: '#06b6d4',
+        icon: '💡'
+      },
+      {
+        id: 'anc_cyb_02',
+        name: '颈侧全息微型条形码刺青',
+        category: 'body_art',
+        description: '左颈侧微弱泛蓝光的几何条形码数字刺青',
+        promptToken: '(faint glowing holographic barcode tattoo on left side of neck:1.40)',
+        negativeToken: 'missing neck tattoo, plain neck',
+        x: 35,
+        y: 68,
+        weight: 1.40,
+        enabled: true,
+        color: '#8b5cf6',
+        icon: '🏷️'
+      }
+    ]
+  }
+];
+
+export const DEFAULT_CHARACTER_ANCHOR_POINTS: CharacterAnchorPoint[] = ANCHOR_PACK_PRESETS[0].anchors;
+
 export interface GenderLockConfig {
   enabled: boolean;
   gender: GenderLockMode;
@@ -18,6 +212,8 @@ export interface GenderLockConfig {
   lockIntensity: 'strict' | 'maximum';
   facialMorphologyRetention: number; // e.g. 99.8%
   preventCrossGenderDrift: boolean;
+  anchorPoints: CharacterAnchorPoint[];
+  anchorAttentionBoost: number; // e.g. 1.45x
 }
 
 export const DEFAULT_GENDER_LOCK_CONFIG: GenderLockConfig = {
@@ -27,7 +223,9 @@ export const DEFAULT_GENDER_LOCK_CONFIG: GenderLockConfig = {
   negativeTokens: 'male, boy, man, masculine face, facial hair, stubble, beard, mustache, adam\'s apple, cross-gender drift, gender morphing, male body proportions, androgynous shift',
   lockIntensity: 'strict',
   facialMorphologyRetention: 99.8,
-  preventCrossGenderDrift: true
+  preventCrossGenderDrift: true,
+  anchorPoints: DEFAULT_CHARACTER_ANCHOR_POINTS,
+  anchorAttentionBoost: 1.45
 };
 
 export interface StoryboardShot {

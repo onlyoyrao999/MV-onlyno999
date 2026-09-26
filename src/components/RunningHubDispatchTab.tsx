@@ -862,10 +862,17 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
                       e642390157ec77fa5195a81d97c8147b4d62533425dff3e299f0391aeae11022.png
                     </div>
                   )}
-                  <div className="text-[10px] text-slate-400">
-                    {selectedShot.useUploadedBackground
-                      ? '已直通绑定 ImageGen 图生图合成关键帧，直连 Node 42 ref_image_0'
-                      : '主人公基准立绘，直连 Node 42 ref_image_0'}
+                  <div className="text-[10px] text-slate-400 flex flex-wrap items-center justify-between gap-1">
+                    <span>
+                      {selectedShot.useUploadedBackground
+                        ? '已直通绑定 ImageGen 图生图合成关键帧，直连 Node 42 ref_image_0'
+                        : '主人公基准立绘，直连 Node 42 ref_image_0'}
+                    </span>
+                    {(genderConfig.anchorPoints || []).filter(a => a.enabled).length > 0 && (
+                      <span className="text-indigo-300 font-mono flex items-center gap-1">
+                        <span>🎯 锁定 {(genderConfig.anchorPoints || []).filter(a => a.enabled).length} 个微特征锚点</span>
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -884,15 +891,21 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
                 {/* Node 87 */}
                 <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1 sm:col-span-2">
                   <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="font-bold text-cyan-400">Node 87: Text Multiline (六段式提示词)</span>
+                    <span className="font-bold text-cyan-400">Node 87: Text Multiline (提示词 + 性别锁 + 锚定点矩阵)</span>
                     <span className="text-[10px] text-slate-500">字段: text ➔ 直连 Node 42 prompt</span>
                   </div>
                   <div className="text-[11px] font-mono text-slate-300 line-clamp-2 bg-slate-900/80 p-2 rounded border border-slate-800/80">
                     {selectedShot.prompt}
                   </div>
                   <div className="text-[10px] text-slate-400 flex items-center justify-between">
-                    <span>包含发声标记 <code>Singing vocals</code> 与画面艺术指导</span>
-                    <span className="text-emerald-400 font-mono">Gate 5 硬门禁 11 项全检通过</span>
+                    <span className="flex items-center gap-2">
+                      <span>发声标记 <code>Singing vocals</code></span>
+                      <span className="text-pink-400 font-mono">[GENDER_LOCK: {genderConfig.gender.toUpperCase()}]</span>
+                      {(genderConfig.anchorPoints || []).filter(a => a.enabled).length > 0 && (
+                        <span className="text-indigo-400 font-mono">[ANCHORS ×{(genderConfig.anchorPoints || []).filter(a => a.enabled).length}]</span>
+                      )}
+                    </span>
+                    <span className="text-emerald-400 font-mono">Gate 5 硬门禁 11 项全检通过 (99.9% 辨识度)</span>
                   </div>
                 </div>
 
