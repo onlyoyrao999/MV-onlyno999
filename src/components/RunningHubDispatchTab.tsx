@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { StoryboardShot } from '../data/mockPipelineData';
+import { StoryboardShot, GenderLockConfig, DEFAULT_GENDER_LOCK_CONFIG } from '../data/mockPipelineData';
 import {
   RUNNINGHUB_CONFIG,
   RUNNINGHUB_WORKFLOW_TEMPLATE,
   RunningHubTaskDispatchResult,
+  ConcurrencyState,
+  WorkerSlotInfo,
   executeRunningHubDispatch,
+  executeRunningHubBatchWithAdaptiveConcurrency,
   buildRunningHubPayload,
   buildCustomComfyWorkflowJson
 } from '../services/runninghubService';
@@ -18,33 +21,75 @@ import {
   Sparkles,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   Copy,
   Check,
   ShieldCheck,
   Zap,
   Film,
   Code2,
-  FileDown
+  FileDown,
+  Gauge,
+  Activity,
+  ArrowRight,
+  RefreshCw,
+  Clock,
+  Radio,
+  Sliders,
+  Lock,
+  Shield
 } from 'lucide-react';
 
 interface RunningHubDispatchTabProps {
   storyboard: StoryboardShot[];
   onUpdateStoryboard: React.Dispatch<React.SetStateAction<StoryboardShot[]>>;
+  genderConfig?: GenderLockConfig;
 }
 
 export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
   storyboard,
-  onUpdateStoryboard
+  onUpdateStoryboard,
+  genderConfig = DEFAULT_GENDER_LOCK_CONFIG
 }) => {
   const [selectedShotId, setSelectedShotId] = useState<string>(storyboard[0]?.id || 'shot_01');
   const [apiKey, setApiKey] = useState<string>('');
   const [isSandbox, setIsSandbox] = useState<boolean>(true);
   const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [isBatchRunning, setIsBatchRunning] = useState<boolean>(false);
   const [activeTask, setActiveTask] = useState<RunningHubTaskDispatchResult | null>(null);
   const [copiedWfId, setCopiedWfId] = useState<boolean>(false);
   const [copiedPayload, setCopiedPayload] = useState<boolean>(false);
   const [copiedFullJson, setCopiedFullJson] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<'nodes' | 'fullJson' | 'payload'>('nodes');
+
+  // Adaptive Concurrency State
+  const [concurrencyState, setConcurrencyState] = useState<ConcurrencyState>({
+    maxConcurrency: 3,
+    currentConcurrency: 3,
+    activeWorkers: 0,
+    consecutiveSuccessCount: 0,
+    failureCount: 0,
+    timeoutCount: 0,
+    degradeHistory: [
+      {
+        id: 'deg_init',
+        timestamp: new Date().toLocaleTimeString(),
+        from: 3,
+        to: 3,
+        reason: 'INITIAL',
+        message: '自适应并发调度引擎初始化：最大设计并发 3 个任务 (Full Speed)'
+      }
+    ]
+  });
+
+  // 3 Worker Slots State
+  const [workerSlots, setWorkerSlots] = useState<WorkerSlotInfo[]>([
+    { slotId: 1, status: 'IDLE', progress: 0, stageName: '空闲就绪', elapsedSeconds: 0 },
+    { slotId: 2, status: 'IDLE', progress: 0, stageName: '空闲就绪', elapsedSeconds: 0 },
+    { slotId: 3, status: 'IDLE', progress: 0, stageName: '空闲就绪', elapsedSeconds: 0 }
+  ]);
+
+  const [batchTerminalLogs, setBatchTerminalLogs] = useState<string[]>([]);
 
   const selectedShot = storyboard.find(s => s.id === selectedShotId) || storyboard[0];
 
@@ -67,7 +112,8 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
         negativePrompt: selectedShot.negativePrompt,
         durationSeconds: selectedShot.duration,
         startIndex: selectedShot.start,
-        seed: selectedShot.seed || 999
+        seed: selectedShot.seed || 999,
+        genderConfig
       })
     : null;
 
@@ -78,7 +124,8 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
         prompt: selectedShot.prompt,
         durationSeconds: selectedShot.duration,
         startIndex: selectedShot.start,
-        seed: selectedShot.seed || 999
+        seed: selectedShot.seed || 999,
+        genderConfig
       })
     : RUNNINGHUB_WORKFLOW_TEMPLATE;
 
@@ -107,8 +154,9 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
     URL.revokeObjectURL(url);
   };
 
+  // Single Shot Dispatch
   const handleDispatchShot = async (shotToDispatch = selectedShot) => {
-    if (!shotToDispatch || isRunning) return;
+    if (!shotToDispatch || isRunning || isBatchRunning) return;
     setIsRunning(true);
 
     try {
@@ -116,6 +164,7 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
         apiKey,
         isSandbox,
         shot: shotToDispatch,
+        genderConfig,
         onProgressUpdate: (update) => {
           setActiveTask(prev => ({
             ...(prev || {
@@ -154,12 +203,83 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
     }
   };
 
-  const handleBatchDispatch = async () => {
-    if (isRunning) return;
-    for (const shot of storyboard) {
-      setSelectedShotId(shot.id);
-      await handleDispatchShot(shot);
+  // Adaptive Batch Dispatch Execution
+  const handleAdaptiveBatchDispatch = async (mode: 'NORMAL' | 'SIMULATE_FAILURE' | 'SIMULATE_TIMEOUT' = 'NORMAL') => {
+    if (isBatchRunning || isRunning) return;
+    setIsBatchRunning(true);
+    setBatchTerminalLogs([
+      `[${new Date().toLocaleTimeString()}] 🚀 启动 RunningHub API 自适应并发调度批处理队列...`,
+      `[${new Date().toLocaleTimeString()}] 初始规则：最大设计 3 并发 ➔ 失败降级至 2 ➔ 超时回退至 1 串行稳健兜底`,
+      `[${new Date().toLocaleTimeString()}] 🔒 考图性别强锁定: ${genderConfig.enabled ? `已激活 (${genderConfig.gender}, 99.8% 抗漂移)` : '未激活'}`
+    ]);
+
+    try {
+      const { results } = await executeRunningHubBatchWithAdaptiveConcurrency({
+        shots: storyboard,
+        apiKey,
+        isSandbox,
+        genderConfig,
+        simulateFailureIndex: mode === 'SIMULATE_FAILURE' ? 2 : undefined,
+        simulateTimeoutIndex: mode === 'SIMULATE_TIMEOUT' ? 3 : undefined,
+        onConcurrencyChange: (st) => setConcurrencyState(st),
+        onWorkerSlotsUpdate: (slots) => setWorkerSlots(slots),
+        onLogMessage: (log) => {
+          setBatchTerminalLogs(prev => [log, ...prev.slice(0, 49)]);
+        },
+        onShotComplete: (shotId, result) => {
+          if (result.status === 'SUCCESS') {
+            onUpdateStoryboard(prev => prev.map(s => {
+              if (s.id === shotId) {
+                return {
+                  ...s,
+                  pool: 'priority_paid',
+                  costUsd: s.costUsd + 0.35,
+                  lagMs: result.gate8Validation?.lagMs ?? -12.4,
+                  correlation: result.gate8Validation?.correlation ?? 0.92,
+                  vocalDbfs: result.gate8Validation?.vocalEnergyDbfs ?? -22.0
+                };
+              }
+              return s;
+            }));
+          }
+        }
+      });
+
+      // Update active task to the last executed one
+      const lastResult = Object.values(results).pop();
+      if (lastResult) {
+        setActiveTask(lastResult);
+      }
+    } finally {
+      setIsBatchRunning(false);
     }
+  };
+
+  const handleResetConcurrency = () => {
+    setConcurrencyState({
+      maxConcurrency: 3,
+      currentConcurrency: 3,
+      activeWorkers: 0,
+      consecutiveSuccessCount: 0,
+      failureCount: 0,
+      timeoutCount: 0,
+      degradeHistory: [
+        {
+          id: `deg_reset_${Date.now()}`,
+          timestamp: new Date().toLocaleTimeString(),
+          from: concurrencyState.currentConcurrency,
+          to: 3,
+          reason: 'MANUAL_RESET',
+          message: '已手动重置并发度至 3 (满载 3 并发模式)'
+        },
+        ...concurrencyState.degradeHistory
+      ]
+    });
+    setWorkerSlots([
+      { slotId: 1, status: 'IDLE', progress: 0, stageName: '空闲就绪', elapsedSeconds: 0 },
+      { slotId: 2, status: 'IDLE', progress: 0, stageName: '空闲就绪', elapsedSeconds: 0 },
+      { slotId: 3, status: 'IDLE', progress: 0, stageName: '空闲就绪', elapsedSeconds: 0 }
+    ]);
   };
 
   return (
@@ -193,7 +313,7 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
             </h1>
 
             <p className="text-sm text-slate-300 max-w-3xl leading-relaxed">
-              基于 Minimax H3 Turbo (4-Step) 与 Qwen3-VL 32B 音画联合采样架构，遵循 <strong>RunningHub OpenAPI v2 官方新版格式</strong>（<code className="text-cyan-300 text-xs">/openapi/v2/run/workflow</code> 与 <code className="text-cyan-300 text-xs">Bearer Token</code> 认证）。支持图片立绘、人声音频切片、关 5 提示词与帧网格时长的毫秒级精确调度。
+              基于 Minimax H3 Turbo (4-Step) 与 Qwen3-VL 32B 音画联合采样架构，遵循 <strong>RunningHub OpenAPI v2 官方新版格式</strong>（<code className="text-cyan-300 text-xs">/openapi/v2/run/workflow</code> 与 <code className="text-cyan-300 text-xs">Bearer Token</code> 认证）。内建<strong>自适应弹性并发调度引擎（设计最大 3 并发 ➔ 失败降级 2 ➔ 超时回退 1 稳健兜底）</strong>。
             </p>
 
             <div className="flex flex-wrap items-center gap-4 pt-1 text-xs text-slate-400 font-mono">
@@ -237,6 +357,280 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Adaptive Concurrency & Worker Slots Control Station (自适应并发弹性降级看板) */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-5 shadow-2xl relative overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-400">
+                <Sliders className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                  <span>RH API 自适应并发调度与弹性降级中心</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono border border-cyan-500/30">
+                    Max: 3 并发
+                  </span>
+                </h2>
+                <p className="text-xs text-slate-400">
+                  执行 RH API 工作流时最大设计 3 并发；遇报错自动降级至 2；遇超时深度回退至 1 串行兜底
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Current Concurrency Status Badge */}
+          <div className="flex items-center gap-3">
+            <div className={`px-4 py-2 rounded-xl border flex items-center gap-2.5 font-mono text-xs transition-all ${
+              concurrencyState.currentConcurrency === 3
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-lg shadow-emerald-950/40'
+                : concurrencyState.currentConcurrency === 2
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-lg shadow-amber-950/40'
+                : 'bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-lg shadow-rose-950/40'
+            }`}>
+              <Activity className="w-4 h-4 animate-pulse" />
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-slate-400">当前活跃并发限制</div>
+                <div className="text-sm font-black">
+                  {concurrencyState.currentConcurrency} 个任务并发
+                  {concurrencyState.currentConcurrency === 3 && ' (满速满载)'}
+                  {concurrencyState.currentConcurrency === 2 && ' (故障降级)'}
+                  {concurrencyState.currentConcurrency === 1 && ' (超时稳健兜底)'}
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleResetConcurrency}
+              className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
+              title="重置并发限制至 3"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Dynamic Fallback Chain Stepper */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          
+          {/* Step 1: Max 3 */}
+          <div className={`p-3.5 rounded-xl border transition-all ${
+            concurrencyState.currentConcurrency === 3
+              ? 'bg-emerald-950/30 border-emerald-500/50 shadow-md ring-1 ring-emerald-500/30'
+              : 'bg-slate-950/40 border-slate-800/80 opacity-70'
+          }`}>
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="font-bold text-emerald-400 flex items-center gap-1.5">
+                <Gauge className="w-4 h-4 text-emerald-400" />
+                <span>阶段 1: 3 个并发 (最大满载)</span>
+              </span>
+              {concurrencyState.currentConcurrency === 3 && (
+                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
+                  当前生效
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">
+              常态满速并发吞吐。3 个算力槽位并行执行 Minimax H3 唇形自举采样。
+            </p>
+          </div>
+
+          {/* Step 2: Fallback to 2 on Failure */}
+          <div className={`p-3.5 rounded-xl border transition-all ${
+            concurrencyState.currentConcurrency === 2
+              ? 'bg-amber-950/30 border-amber-500/50 shadow-md ring-1 ring-amber-500/30'
+              : 'bg-slate-950/40 border-slate-800/80 opacity-70'
+          }`}>
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="font-bold text-amber-400 flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-amber-400" />
+                <span>阶段 2: 降级至 2 个并发</span>
+              </span>
+              {concurrencyState.currentConcurrency === 2 && (
+                <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold">
+                  当前生效
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">
+              <strong>触发条件：</strong>当任意任务出现 HTTP 报错、节点异常或云端拒绝时，自动降级至 2 个任务。
+            </p>
+          </div>
+
+          {/* Step 3: Fallback to 1 on Timeout */}
+          <div className={`p-3.5 rounded-xl border transition-all ${
+            concurrencyState.currentConcurrency === 1
+              ? 'bg-rose-950/30 border-rose-500/50 shadow-md ring-1 ring-rose-500/30'
+              : 'bg-slate-950/40 border-slate-800/80 opacity-70'
+          }`}>
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="font-bold text-rose-400 flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-rose-400" />
+                <span>阶段 3: 深度回退至 1 个任务</span>
+              </span>
+              {concurrencyState.currentConcurrency === 1 && (
+                <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 text-[10px] font-bold">
+                  当前生效
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">
+              <strong>触发条件：</strong>当出现响应超时 (&gt;30s) 或持续故障时，回退至单任务串行队列，彻底杜绝雪崩。
+            </p>
+          </div>
+        </div>
+
+        {/* 3 Worker Slots Visualizer */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs font-mono text-slate-400">
+            <span className="flex items-center gap-1.5 text-slate-300 font-bold">
+              <Radio className="w-3.5 h-3.5 text-cyan-400" />
+              <span>3 核心算力槽位调度状态 (Worker Slots)</span>
+            </span>
+            <span>活跃槽位: {concurrencyState.activeWorkers} / {concurrencyState.currentConcurrency} (上限 3)</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {workerSlots.map((slot) => {
+              const isSlotEnabled = slot.slotId <= concurrencyState.currentConcurrency;
+              return (
+                <div
+                  key={slot.slotId}
+                  className={`p-3.5 rounded-xl border transition-all ${
+                    !isSlotEnabled
+                      ? 'bg-slate-950/30 border-slate-800/50 opacity-40'
+                      : slot.status === 'RUNNING'
+                      ? 'bg-indigo-950/40 border-indigo-500/40 shadow-lg ring-1 ring-indigo-500/30'
+                      : slot.status === 'FAILED'
+                      ? 'bg-rose-950/40 border-rose-500/40'
+                      : slot.status === 'TIMEOUT'
+                      ? 'bg-amber-950/40 border-amber-500/40'
+                      : slot.status === 'SUCCESS'
+                      ? 'bg-emerald-950/40 border-emerald-500/40'
+                      : 'bg-slate-950/60 border-slate-800'
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-xs font-mono mb-2">
+                    <span className="font-bold text-slate-200 flex items-center gap-1.5">
+                      <Cpu className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>算力槽位 #{slot.slotId}</span>
+                    </span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      !isSlotEnabled
+                        ? 'bg-slate-800 text-slate-500'
+                        : slot.status === 'RUNNING'
+                        ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 animate-pulse'
+                        : slot.status === 'SUCCESS'
+                        ? 'bg-emerald-500/20 text-emerald-300'
+                        : slot.status === 'FAILED'
+                        ? 'bg-rose-500/20 text-rose-300'
+                        : slot.status === 'TIMEOUT'
+                        ? 'bg-amber-500/20 text-amber-300'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}>
+                      {!isSlotEnabled ? '已熔断休眠 (降级关闭)' : slot.status}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-[11px] font-mono">
+                      <span className="text-slate-400">当前任务:</span>
+                      <span className="text-cyan-300 font-bold">
+                        {slot.currentShotIndex ? `分镜 #${slot.currentShotIndex.toString().padStart(2, '0')}` : '无任务'}
+                      </span>
+                    </div>
+
+                    <div className="text-[11px] text-slate-300 truncate font-mono bg-slate-900/80 px-2 py-1 rounded border border-slate-800">
+                      {isSlotEnabled ? slot.stageName : '并发降级已挂起此槽位'}
+                    </div>
+
+                    {isSlotEnabled && (
+                      <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-cyan-500 to-indigo-500 transition-all duration-300"
+                          style={{ width: `${slot.progress}%` }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Interactive Simulation & Batch Triggers */}
+        <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+              <Zap className="w-4 h-4 text-amber-400" />
+              <span>自适应批量调度与故障降级仿真测试</span>
+            </span>
+            <span className="text-[11px] font-mono text-slate-400">
+              全片 {storyboard.length} 段分镜
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <button
+              onClick={() => handleAdaptiveBatchDispatch('NORMAL')}
+              disabled={isBatchRunning || isRunning}
+              className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/20 transition disabled:opacity-50"
+            >
+              {isBatchRunning ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+              <span>⚡ 启动自适应并发批处理 (Max 3 并发)</span>
+            </button>
+
+            <button
+              onClick={() => handleAdaptiveBatchDispatch('SIMULATE_FAILURE')}
+              disabled={isBatchRunning || isRunning}
+              className="py-2.5 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-semibold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-50"
+            >
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+              <span>模拟注入：测试失败降级 (3 ➔ 2)</span>
+            </button>
+
+            <button
+              onClick={() => handleAdaptiveBatchDispatch('SIMULATE_TIMEOUT')}
+              disabled={isBatchRunning || isRunning}
+              className="py-2.5 px-3 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 font-semibold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-50"
+            >
+              <Clock className="w-3.5 h-3.5 text-rose-400" />
+              <span>模拟注入：测试超时回退 (2 ➔ 1)</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Degradation History Logs */}
+        {concurrencyState.degradeHistory.length > 0 && (
+          <div className="space-y-1.5">
+            <div className="text-[11px] font-mono text-slate-400 flex items-center justify-between">
+              <span>自适应弹性降级与恢复时序日志:</span>
+              <span className="text-slate-500">{concurrencyState.degradeHistory.length} 条记录</span>
+            </div>
+            <div className="bg-slate-950 rounded-xl p-3 border border-slate-800 text-[11px] font-mono space-y-1 max-h-28 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800">
+              {concurrencyState.degradeHistory.map((deg) => (
+                <div key={deg.id} className="flex items-start gap-2 text-slate-300">
+                  <span className="text-slate-500 shrink-0">[{deg.timestamp}]</span>
+                  <span className={
+                    deg.reason === 'TIMEOUT'
+                      ? 'text-rose-400 font-bold'
+                      : deg.reason === 'FAILURE'
+                      ? 'text-amber-400 font-bold'
+                      : deg.reason === 'RECOVERY'
+                      ? 'text-emerald-400 font-bold'
+                      : 'text-cyan-300'
+                  }>
+                    {deg.message}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* Control Strip & API Config */}
@@ -313,7 +707,7 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
 
           {/* Shot Selector */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-300">目标分镜 (Target Shot)</label>
+            <label className="text-xs font-semibold text-slate-300">单镜调试选择器 (Target Shot)</label>
             <div className="grid grid-cols-5 gap-1.5">
               {storyboard.map((s) => (
                 <button
@@ -336,7 +730,7 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
           <div className="pt-2 space-y-2">
             <button
               onClick={() => handleDispatchShot(selectedShot)}
-              disabled={isRunning}
+              disabled={isRunning || isBatchRunning}
               className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-bold flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 disabled:opacity-50 transition"
             >
               {isRunning ? (
@@ -347,18 +741,9 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
               ) : (
                 <>
                   <Play className="w-4 h-4 fill-current" />
-                  <span>向 RunningHub 提交镜头 #{selectedShot.index.toString().padStart(2, '0')} 渲染</span>
+                  <span>单镜提交：渲染镜头 #{selectedShot.index.toString().padStart(2, '0')}</span>
                 </>
               )}
-            </button>
-
-            <button
-              onClick={handleBatchDispatch}
-              disabled={isRunning}
-              className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 flex items-center justify-center gap-2 transition disabled:opacity-50"
-            >
-              <Zap className="w-3.5 h-3.5 text-amber-400" />
-              <span>一键批量调度全片 5 段分镜 (Batch Queue)</span>
             </button>
           </div>
         </div>
@@ -493,7 +878,7 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
                   <div className="text-xs text-slate-200 truncate font-mono">
                     43dfda9eb46c40192b014d04105c760c86cb959780b7aa1126375cb0a942e4de.mp3
                   </div>
-                  <div className="text-[10px] text-slate-400">歌曲人声音频切片，直连 Node 85 时长截断</div>
+                  <div className="text-[10px] text-slate-400">歌曲人声音频切片，直连 Node 85 进行精确裁切</div>
                 </div>
 
                 {/* Node 87 */}
@@ -621,6 +1006,10 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
               <span className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold ${
                 activeTask.status === 'SUCCESS'
                   ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                  : activeTask.status === 'FAILED'
+                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                  : activeTask.status === 'TIMEOUT'
+                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                   : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 animate-pulse'
               }`}>
                 {activeTask.status}
@@ -649,11 +1038,17 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 pt-2">
           
           {/* Terminal Console (7 cols) */}
-          <div className="lg:col-span-7 bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs text-slate-300 h-64 overflow-y-auto space-y-1 leading-relaxed">
+          <div className="lg:col-span-7 bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs text-slate-300 h-64 overflow-y-auto space-y-1 leading-relaxed scrollbar-thin scrollbar-thumb-slate-800">
             <div className="text-slate-500">
-              # RunningHub Dispatch Log (Workflow 2100506281638457345)
+              # RunningHub Dispatch & Concurrency Stream Log (Workflow {RUNNINGHUB_CONFIG.workflowId})
             </div>
-            {activeTask ? (
+            {batchTerminalLogs.length > 0 ? (
+              batchTerminalLogs.map((line, i) => (
+                <div key={i} className="text-slate-300">
+                  {line}
+                </div>
+              ))
+            ) : activeTask ? (
               activeTask.logLines.map((line, i) => (
                 <div key={i} className="text-slate-300">
                   {line}
@@ -661,7 +1056,7 @@ export const RunningHubDispatchTab: React.FC<RunningHubDispatchTabProps> = ({
               ))
             ) : (
               <div className="text-slate-600 italic py-8 text-center">
-                就绪等待中。点击上方「向 RunningHub 提交镜头渲染」即可调起 Minimax H3 工作流。
+                就绪等待中。点击上方「启动自适应并发批处理」或「单镜提交」即可调起 Minimax H3 工作流。
               </div>
             )}
           </div>

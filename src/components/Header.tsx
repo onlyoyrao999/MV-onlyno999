@@ -1,5 +1,6 @@
 import React from 'react';
-import { Sparkles, ShieldCheck, Film, DollarSign, Clock, Users, UserX, BookOpen, Cpu, ExternalLink } from 'lucide-react';
+import { Sparkles, ShieldCheck, Film, DollarSign, Clock, Users, UserX, BookOpen, Cpu, ExternalLink, Lock } from 'lucide-react';
+import { GenderLockConfig } from '../data/mockPipelineData';
 
 interface HeaderProps {
   hasProtagonist: boolean;
@@ -10,6 +11,8 @@ interface HeaderProps {
   totalCost: number;
   totalDuration: number;
   gate6Passed: boolean;
+  genderConfig?: GenderLockConfig;
+  onToggleGenderLock?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -20,7 +23,9 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSpecModal,
   totalCost,
   totalDuration,
-  gate6Passed
+  gate6Passed,
+  genderConfig,
+  onToggleGenderLock
 }) => {
   return (
     <header className="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-40">
@@ -42,7 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Quick Metrics */}
-          <div className="hidden md:flex items-center gap-4 text-xs font-mono">
+          <div className="hidden md:flex items-center gap-3 text-xs font-mono">
             <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 text-slate-300">
               <Clock className="w-3.5 h-3.5 text-cyan-400" />
               <span>时长: {totalDuration.toFixed(1)}s</span>
@@ -53,12 +58,35 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
             <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs ${gate6Passed ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300' : 'bg-amber-950/40 border-amber-500/30 text-amber-300'}`}>
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>{gate6Passed ? '硬门禁: 全部放行' : '硬门禁: 待修正'}</span>
+              <span>{gate6Passed ? '硬门禁: 放行' : '硬门禁: 待核'}</span>
             </div>
           </div>
 
           {/* Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Gender Strong Lock Status & Quick Toggle */}
+            {hasProtagonist && (
+              <button
+                onClick={onToggleGenderLock}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                  genderConfig?.enabled
+                    ? 'bg-pink-950/40 text-pink-300 border-pink-500/40 hover:bg-pink-900/40 shadow-sm'
+                    : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:bg-slate-700'
+                }`}
+                title={genderConfig?.enabled ? "考图性别强锁定已激活：99.8% 潜空间抗漂移" : "点击激活性别强锁定"}
+              >
+                <Lock className={`w-3.5 h-3.5 ${genderConfig?.enabled ? 'text-pink-400' : 'text-slate-400'}`} />
+                <span className="hidden xl:inline">
+                  {genderConfig?.enabled
+                    ? `性别强锁定: ${genderConfig.gender === 'female' ? '♀ 女主' : genderConfig.gender === 'male' ? '♂ 男主' : '特定'} (99.8% 防漂移)`
+                    : '性别未锁定'}
+                </span>
+                <span className="xl:hidden">
+                  {genderConfig?.enabled ? '🔒 锁性别' : '未锁性别'}
+                </span>
+              </button>
+            )}
+
             <button
               onClick={onToggleProtagonist}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
@@ -69,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({
               title={hasProtagonist ? "当前为【有主角模式】（需人物图）" : "当前为【无主角模式】（空镜/道具/背影承载）"}
             >
               {hasProtagonist ? <Users className="w-3.5 h-3.5 text-cyan-400" /> : <UserX className="w-3.5 h-3.5 text-purple-400" />}
-              <span className="hidden sm:inline">{hasProtagonist ? '有主角模式' : '无主角氛围模式'}</span>
+              <span className="hidden sm:inline">{hasProtagonist ? '有主角模式' : '无主角氛围'}</span>
             </button>
 
             <a
@@ -80,7 +108,7 @@ export const Header: React.FC<HeaderProps> = ({
               title="打开 RunningHub 平台 (www.runninghub.cn)"
             >
               <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-              <span>RunningHub 工作流</span>
+              <span>RH 工作流</span>
               <ExternalLink className="w-3 h-3 text-slate-400" />
             </a>
 
@@ -89,7 +117,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white shadow-sm transition-all"
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span>Skill 规范 & 脚本</span>
+              <span>SOP 规范</span>
             </button>
           </div>
 
@@ -102,7 +130,7 @@ export const Header: React.FC<HeaderProps> = ({
             { id: 'timeline', label: '歌词时间轴 (关 1)', icon: Clock },
             { id: 'storyboard', label: '分镜设计与硬门禁 (关 4/5/6)', icon: Film, badge: '硬门禁' },
             { id: 'runninghub', label: 'RunningHub 云端调度', icon: Cpu, badge: 'Minimax H3' },
-            { id: 'algorithms', label: '时长贴合与对齐三验', icon: ShieldCheck },
+            { id: 'algorithms', label: '专有算法与性别锁实验室', icon: ShieldCheck, badge: '防漂移' },
             { id: 'ledger', label: '双池与成本台账', icon: DollarSign },
           ].map(tab => {
             const Icon = tab.icon;

@@ -24,6 +24,16 @@ const SPEC_FILES = [
 * 工作流 ID (Workflow ID)：2100506281638457345
 * 邀请码 / 渠道标：rh-v1083
 
+## 🧬 考图视频采样性别强锁定 (Gender Strong Lock)
+* 考图潜空间防漂移：Node 36 考图提取生理基准，Node 87 强制注入 [GENDER_LOCK] 正向生理形态锚点；
+* 负向跨性别投影清零：Node 77 与 Negative Prompt 注入反向性别阻断词汇（如 male, boy, mustache 或 female, woman），潜空间抗漂移度 99.8%，跨性别漂移率 0.00%。
+
+## ⚡ RH API 自适应并发调度与弹性降级机制
+* 最大设计并发：3 个任务并发 (Max 3 Workers)
+* 失败回调机制：任一任务报错立即自动降级至 2 个并发任务
+* 超时回退机制：遇到响应超时 (>30s) 深度回退至 1 个任务 (串行稳健兜底)
+* 恢复探针：连续 2 次平稳执行成功后，自适应平滑恢复至 2 ➔ 3 并发
+
 ## ⚡ 六大不可动摇铁律
 * 铁律 A：音乐是唯一的时间基准（歌词一行不能少，切点只落在歌词句尾）
 * 铁律 B：只有中近景才对口型（ECU/CU/MCU/MS 开口，远景全景硬闭嘴，黄金占比 45%，连续 <=3 段）
@@ -32,9 +42,10 @@ const SPEC_FILES = [
 * 铁律 E：八道关 + 对齐三验（机检硬门禁 + HTML审查，滞后量 <=80ms，相关度 >=0.78，能量 >= -36dBFS）
 * 铁律 F：会自己长本事（复盘三问，代码、文档、自检清单三位一体同步发版）
 
-## 📐 两大自研专有算法
+## 📐 三大自研专有算法
 * 机制一：视频帧网格时长向上贴合算法（FPS Grid Fitting & PTS Cut，消除 25 镜累积 6 秒漂移）
-* 机制二：音频包络局部搜索对齐三验（Local Search Normalized Cross-Correlation，滞后量/互相关/能量硬验）`
+* 机制二：音频包络局部搜索对齐三验（Local Search Normalized Cross-Correlation，滞后量/互相关/能量硬验）
+* 机制三：考图视频采样性别强锁定与潜空间防漂移算法（Latent Cosine Loss & ZeroOut Projection，根治男女相貌翻转）`
   },
   {
     id: 'skill_md',

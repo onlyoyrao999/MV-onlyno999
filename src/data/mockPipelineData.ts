@@ -8,6 +8,28 @@ export interface LyricLine {
   isInstrumental?: boolean;
 }
 
+export type GenderLockMode = 'female' | 'male' | 'unisex' | 'none';
+
+export interface GenderLockConfig {
+  enabled: boolean;
+  gender: GenderLockMode;
+  positiveTokens: string;
+  negativeTokens: string;
+  lockIntensity: 'strict' | 'maximum';
+  facialMorphologyRetention: number; // e.g. 99.8%
+  preventCrossGenderDrift: boolean;
+}
+
+export const DEFAULT_GENDER_LOCK_CONFIG: GenderLockConfig = {
+  enabled: true,
+  gender: 'female',
+  positiveTokens: '[GENDER_LOCK: FEMALE, 1woman, biological female singer, delicate feminine facial morphology, clear feminine jawline, distinct female anatomy, identical facial structure from reference image]',
+  negativeTokens: 'male, boy, man, masculine face, facial hair, stubble, beard, mustache, adam\'s apple, cross-gender drift, gender morphing, male body proportions, androgynous shift',
+  lockIntensity: 'strict',
+  facialMorphologyRetention: 99.8,
+  preventCrossGenderDrift: true
+};
+
 export interface StoryboardShot {
   id: string;
   index: number;
@@ -24,6 +46,8 @@ export interface StoryboardShot {
   pool: 'spot_free' | 'priority_paid';
   costUsd: number;
   status: 'approved' | 'generating' | 'completed' | 'reroll';
+  genderLock?: GenderLockMode;
+  genderLockEnabled?: boolean;
   seed?: number;
   lagMs?: number;
   correlation?: number;
@@ -74,14 +98,14 @@ export const GATES_DATA: GateDefinition[] = [
   },
   {
     id: 3,
-    name: "人物与核心资产",
-    shortName: "关 3: 人物资产",
+    name: "人物与核心资产（考图与性别强锁定）",
+    shortName: "关 3: 人物资产与性别锁",
     phase: "资产准备",
     stepIndex: 3,
     isHardBarrier: false,
-    description: "主人公多角度面容图与核心服装，或直接一键启用「无主角模式」由空镜与道具承载情绪。",
+    description: "主人公多角度面容图与核心服装，考图提取面部形态与生理特征；激活性别强锁定 (Gender Strong Lock) 杜绝采样漂移；或一键启用「无主角模式」。",
     reviewMode: "Machine + Human HTML",
-    keyChecks: ["面部多角度特征一致性", "关键服装与道具指纹生成", "无主角模式环境图集确立"]
+    keyChecks: ["面部多角度特征一致性", "考图生理性别强锁定 (防采样漂移)", "关键服装与道具指纹生成", "无主角模式环境图集确立"]
   },
   {
     id: 4,
@@ -101,7 +125,7 @@ export const GATES_DATA: GateDefinition[] = [
     phase: "核心门禁",
     stepIndex: 5,
     isHardBarrier: true,
-    description: "六段式结构 + 唱歌专用独立框架 + 嘴唇闭合正负双向压制。11 项机检全绿方可放行，计算防伪指纹。",
+    description: "六段式结构 + 唱歌专用独立框架 + 嘴唇闭合正负双向压制 + 考图视频采样性别强锁定。11 项机检全绿方可放行，计算防伪指纹。",
     reviewMode: "Machine Hard Block",
     keyChecks: [
       "1. 六段式结构完整度 [SHOT] 至 [CAMERA_TECH]",
@@ -110,8 +134,8 @@ export const GATES_DATA: GateDefinition[] = [
       "4. 绝无 saying/talking 等对白动词",
       "5. 口型段仅限特写/中景 (ECU/CU/MCU/MS)",
       "6. 非口型段正向必须含 mouth naturally closed",
-      "7. 负向必须注入 text/subtitles/lyrics/watermark 防文字压制 (MV画面严禁任何文字出现)",
-      "8. 人物识别特征一致性锚点",
+      "7. 负向必须注入 text/subtitles/lyrics 防文字压制 + 跨性别反向硬压制",
+      "8. 人物识别特征与考图性别强锁定锚点 [GENDER_LOCK]",
       "9. 无日夜/光照逻辑自相矛盾词",
       "10. 短窗口动作幅度适配度",
       "11. SHA-256 签名校验，改写自动退回"

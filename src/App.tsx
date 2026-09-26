@@ -7,12 +7,13 @@ import { RunningHubDispatchTab } from './components/RunningHubDispatchTab';
 import { AlgorithmLabTab } from './components/AlgorithmLabTab';
 import { CostLedgerTab } from './components/CostLedgerTab';
 import { SkillSpecModal } from './components/SkillSpecModal';
-import { DEMO_STORYBOARD, StoryboardShot } from './data/mockPipelineData';
+import { DEMO_STORYBOARD, StoryboardShot, GenderLockConfig, DEFAULT_GENDER_LOCK_CONFIG } from './data/mockPipelineData';
 import { validateGate6 } from './utils/pipelineValidators';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [hasProtagonist, setHasProtagonist] = useState<boolean>(true);
+  const [genderConfig, setGenderConfig] = useState<GenderLockConfig>(DEFAULT_GENDER_LOCK_CONFIG);
   const [storyboard, setStoryboard] = useState<StoryboardShot[]>(DEMO_STORYBOARD);
   const [isSpecModalOpen, setIsSpecModalOpen] = useState<boolean>(false);
 
@@ -33,6 +34,13 @@ export function App() {
 
   const handleToggleProtagonist = () => {
     setHasProtagonist(prev => !prev);
+  };
+
+  const handleToggleGenderLock = () => {
+    setGenderConfig(prev => ({
+      ...prev,
+      enabled: !prev.enabled
+    }));
   };
 
   const handleRerollShot = (shotId: string) => {
@@ -63,6 +71,8 @@ export function App() {
         totalCost={totalCost}
         totalDuration={totalDuration}
         gate6Passed={gate6Result.passed}
+        genderConfig={genderConfig}
+        onToggleGenderLock={handleToggleGenderLock}
       />
 
       {/* Main Content Area */}
@@ -80,6 +90,8 @@ export function App() {
             storyboard={storyboard}
             onUpdateStoryboard={setStoryboard}
             hasProtagonist={hasProtagonist}
+            genderConfig={genderConfig}
+            onUpdateGenderConfig={setGenderConfig}
             masterDuration={masterDuration}
             onJumpToRunningHub={(_shotId) => setActiveTab('runninghub')}
           />
@@ -89,6 +101,7 @@ export function App() {
           <RunningHubDispatchTab
             storyboard={storyboard}
             onUpdateStoryboard={setStoryboard}
+            genderConfig={genderConfig}
           />
         )}
 
@@ -112,6 +125,8 @@ export function App() {
             <span>十二步全链</span>
             <span>·</span>
             <span>八道 HTML 审核关</span>
+            <span>·</span>
+            <span className="text-pink-400 font-semibold">考图采样性别强锁定</span>
             <span>·</span>
             <span className="text-cyan-400 font-semibold">自研对齐三验 & 时长贴合</span>
           </div>
