@@ -1,4 +1,4 @@
-# MV-AUTO-PIPELINE (V1.0.6) · 音乐 MV 全自动生成 SOP
+# MV-AUTO-PIPELINE (V1.1.5) · 音乐 MV 全自动生成 SOP
 
 > **核心承诺**：一首歌 + 一张主人公图，交付一支音画严格对齐、口型精准匹配、全片纯净无字幕、全程伴奏不间断的高品质音乐 MV。  
 > **底层算力**：官方无缝集成 **RunningHub (www.runninghub.cn)** 专属定制 ComfyUI 云端工作流 `AI音乐MV数字人（ngualarith+Minimax H3 Selflift）新二采`（Workflow ID: `2100506281638457345`）。
@@ -275,7 +275,18 @@ npm run build
 
 ## 📄 授权与同步维护铁律 (Maintenance Directive)
 
+* **全链路版本号同步铁律 (Version Sync Directive · 硬性准则)**：  
+  后续每一次功能迭代、算法演进、接口升级或规则变更，**必须无条件全链路同步更新以下 7 大版本载体**，绝不允许版本号脱节滞后：
+  1. `package.json`：`"version": "x.y.z"`
+  2. `README.md`：标题及正文统一为 `# MV-AUTO-PIPELINE (Vx.y.z)`
+  3. `metadata.json`：描述字段同步注入 `(Vx.y.z)`
+  4. `index.html`：`meta name="description"` 与 `og:description` 严格同步
+  5. `src/components/Header.tsx`：顶部导航栏 Logo 徽标 `Vx.y.z SOP`
+  6. `src/App.tsx`：全局页脚版本标记 `MV-AUTO-PIPELINE (Vx.y.z)`
+  7. `src/components/SkillSpecModal.tsx`：内置 SOP 规范与 `SKILL.md` 全量同步
+
 * **README 同步更新铁律（硬性准则）**：  
-  后续无论进行任何功能增删、接口变动、ComfyUI 拓扑调整、并发策略演进或规则更新，**必须无条件同步修正根目录 `/README.md` 与 Skill 专用目录 `/skills/mv-auto-pipeline/README.md`**。
+  后续无论进行任何功能增删、接口变动、ComfyUI 拓扑调整、并发策略演进或规则更新，**必须无条件同步修正根目录 `/README.md` 与 Skill 专用目录 `/skills/mv-auto-pipeline/README.md`**，保持技术文档与工程实现 100% 实时对齐。
+
 * **三位一体交付原则（铁律 F）**：  
   必须时刻保持 **工程代码 (Code)**、**规范文档 (Docs & READMEs)**、**自动化机检清单 (Checklist & Scripts)** 三位一体完全一致，杜绝任何文档滞后。

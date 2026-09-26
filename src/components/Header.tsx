@@ -40,7 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-base tracking-wider text-slate-100 font-mono">MV-AUTO-PIPELINE</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 font-semibold border border-cyan-500/30">V1.0.6 SOP</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 font-semibold border border-cyan-500/30">V1.1.5 SOP</span>
               </div>
               <p className="text-xs text-slate-400 hidden sm:block">一首歌 + 一张图 出来一支口型对得上的 MV</p>
             </div>

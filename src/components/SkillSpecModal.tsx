@@ -12,7 +12,7 @@ const SPEC_FILES = [
     name: 'README.md',
     type: 'markdown',
     path: '/README.md',
-    content: `# MV-AUTO-PIPELINE (V1.0.6) · 音乐 MV 全自动生成 SOP
+    content: `# MV-AUTO-PIPELINE (V1.1.5) · 音乐 MV 全自动生成 SOP
 
 > 核心承诺：一首歌 + 一张主人公图，交付一支音画严格对齐、口型精准匹配的高品质音乐 MV。
 > 底层算力：官方无缝集成 RunningHub (www.runninghub.cn) ComfyUI 云端工作流「AI音乐MV数字人（ngualarith+Minimax H3 Selflift）新二采」。
@@ -47,7 +47,11 @@ const SPEC_FILES = [
 * 机制一：视频帧网格时长向上贴合算法（FPS Grid Fitting & PTS Cut，消除 25 镜累积 6 秒漂移）
 * 机制二：音频包络局部搜索对齐三验（Local Search Normalized Cross-Correlation，滞后量/互相关/能量硬验）
 * 机制三：考图视频采样性别强锁定算法（Latent Cosine Loss & ZeroOut Projection，根治男女相貌翻转）
-* 机制四：考图多维特异锚定点与注意力防漂移机制（Multi-Anchor Point Cross-Attention Lock，解决大众脸与脸盲漂移）`
+* 机制四：考图多维特异锚定点与注意力防漂移机制（Multi-Anchor Point Cross-Attention Lock，解决大众脸与脸盲漂移）
+
+## 📄 授权与同步维护铁律 (Version & README Sync Directive)
+* 全链路版本同步：任何更新必须无条件联动 package.json、README.md、metadata.json、index.html、Header、App 与 SOP 弹窗。
+* README 实时更新：新算法、节点拓扑或规则变动必须无条件同步修正 /README.md，保持代码与文档 100% 对齐。`
   },
   {
     id: 'skill_md',
@@ -57,12 +61,12 @@ const SPEC_FILES = [
     content: `---
 name: mv-auto-pipeline
 description: >
-  一键音乐 MV 全自动生成 SOP (V1.0.6)。输入一首歌 + 一张主人公图，交付一支音画严格对齐、口型精准匹配的高品质音乐 MV。
+  一键音乐 MV 全自动生成 SOP (V1.1.5)。输入一首歌 + 一张主人公图，交付一支音画严格对齐、口型精准匹配的高品质音乐 MV。
   打通从歌词强制对齐到成片验收的十二步全链流程与八道 HTML 门禁（含第 5 关提示词机检与第 6 关音乐窗口口型硬门禁），
   落实六大不可动摇铁律，集成音频包络局部搜索对齐三验与视频帧网格时长贴合自研算法。
 ---
 
-# MV-AUTO-PIPELINE · 音乐 MV 全自动生成 SOP (V1.0.6)
+# MV-AUTO-PIPELINE · 音乐 MV 全自动生成 SOP (V1.1.5)
 
 核心承诺：一首歌 + 一张图，出来一支口型对得上的 MV。
 AI 做的 MV，第一眼就露馅的地方不是画面不够炫，而是嘴和歌对不上。

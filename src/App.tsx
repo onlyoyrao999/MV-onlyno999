@@ -120,7 +120,7 @@ export function App() {
       {/* Footer */}
       <footer className="border-t border-slate-900 bg-slate-950/80 py-6 text-center text-xs text-slate-500 font-mono">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>MV-AUTO-PIPELINE (V1.0.6) · 一键音乐 MV 全自动生成 SOP</span>
+          <span>MV-AUTO-PIPELINE (V1.1.5) · 一键音乐 MV 全自动生成 SOP</span>
           <div className="flex items-center gap-4 text-slate-400">
             <span>十二步全链</span>
             <span>·</span>
